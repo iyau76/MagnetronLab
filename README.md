@@ -1,5 +1,15 @@
 # 磁截止实验室（MagnetronLab）
 
+**面向近代物理实验“磁控条件法测电子比荷”的开源三维虚拟仿真、实测数据复现与非理想机制探究平台。**
+
+[![Award](https://img.shields.io/badge/2026%20全国大学生物理实验竞赛（创新）-一等奖-b87333)]()
+[![Python](https://img.shields.io/badge/Python-3.10%2B-3776ab)]()
+[![C++17](https://img.shields.io/badge/Physics%20Kernel-C%2B%2B17%20DOPRI5(4)-00599c)]()
+[![WebGL 2](https://img.shields.io/badge/Frontend-Three.js%20%2F%20WebGL%202-147e79)]()
+[![License](https://img.shields.io/badge/Code-MIT-green)](LICENSE)
+[![Data License](https://img.shields.io/badge/Data%20%26%20Docs-CC%20BY%204.0-lightgrey)](LICENSE)
+
+
 **从两块毫伏表的反常读数出发，回到真空二极管内部追踪电子的运动与收集。**  
 2026 年第十二届全国大学生物理实验竞赛（创新）一等奖作品 · 开源三维虚拟实验台、C++17 粒子动力学求解器与双通道实测数据集
 
