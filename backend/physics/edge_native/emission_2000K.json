@@ -1,0 +1,10 @@
+{
+  "source": "magnetron_model.emission_samples; original finite-field study initial states",
+  "seed": 20260910,
+  "temperature_K": 2000,
+  "sha256": "377e8dbd7cd0c900b1043e31465bea49c6c70377fba658d0b1bb035a0e1a214b",
+  "shape": [
+    32768,
+    6
+  ]
+}

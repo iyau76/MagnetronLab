@@ -1,0 +1,244 @@
+<!doctype html>
+<html data-surface="cutoff" lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>正式磁截止实验</title>
+    <link rel="stylesheet" href="../chapter1/scene-labels.css" />
+    <link rel="stylesheet" href="studio.css" />
+  <link rel="stylesheet" href="../compact.css"><script defer src="../compact.js"></script></head>
+  <body>
+    <header id="hud">
+      <div class="hud-left">
+        <button id="main-menu" class="icon-btn" aria-label="主菜单">☰</button>
+        <div class="crumbs">
+          <div class="crumb-line">
+            <button id="btn-back-ch1">01 装置</button><span>›</span><button id="btn-back-ch2">02 标定</button
+            ><span>›</span><strong>03 正式磁截止实验</strong>
+          </div>
+          <div id="cal-summary"></div>
+          <div id="story-progress" aria-label="实验进度"></div>
+        </div>
+      </div>
+      <div id="task-hint"></div>
+      <div class="hud-right">
+        <button id="guide-toggle" class="quiet-btn">跳过引导</button>
+        <div class="view-switch">
+          <button id="btn-view-bench">实验台</button><button id="btn-view-tube">管内</button>
+        </div>
+        <button id="btn-reset-cam" class="icon-btn" aria-label="复位视角">↻</button>
+      </div>
+    </header>
+    <main id="scene" aria-label="三维实验台">
+      <div id="compact-sweep" hidden>
+        <span id="compact-count"></span><button id="compact-pause">暂停</button
+        ><button id="compact-finish">立即完成</button>
+      </div>
+      <div id="tube-hud-chip" hidden>
+        <button id="tube-zoom-orbit">放大轨迹</button><button id="tube-pot-ua">面板 $U_a$</button
+        ><button id="tube-pot-ueff">有效 $U_{\mathrm{eff}}$</button>
+      </div>
+      <div id="scene-status">
+        <button id="restore-latest" hidden>回到末点</button><span id="scene-status-txt"></span>
+      </div>
+      <div id="tube-rcut-info" hidden></div>
+      <div id="scene-hover" hidden></div>
+    </main>
+    <aside id="left-drawer" class="drawer" hidden>
+      <div class="drawer-head">
+        <h2>扫场控制台</h2>
+        <button id="close-left" class="close-btn" aria-label="关闭扫场控制">×</button>
+      </div>
+      <div class="drawer-body" id="sweep-controls">
+        <section class="block">
+          <div class="block-head"><span>加速电压 $U_a$</span><small id="volt-progress-txt"></small></div>
+          <div id="volt-grid"></div>
+        </section>
+        <section class="block" id="sweep-program">
+          <div class="block-head"><span>自动扫场</span><small>0.00 → 1.40 A</small></div>
+          <div class="sweep-meta">
+            <span id="sweep-status-lbl"></span><span class="mono" id="sweep-count-lbl"></span>
+          </div>
+          <div class="progress-rail"><div id="sweep-progress"></div></div>
+          <button id="btn-run-sweep" class="primary-btn">▶ 自动扫场 (10 V)</button>
+          <div class="speed-pills">
+            <span>采集速度</span><button id="spd-1">1×</button><button id="spd-3">3×</button
+            ><button id="spd-skip">立即完成</button>
+          </div>
+        </section>
+      </div>
+      <button id="btn-sweep-rest" class="sub-btn" hidden></button>
+        <section class="block" id="bench-meters">
+          <div class="block-head"><span>台面仪表</span><small id="scrub-badge"></small></div>
+          <div class="meter-grid">
+            <div class="m-cell">
+              <span class="m-lbl">CH1 励磁电源</span><strong id="m-ch1-i" class="mono"></strong
+              ><small id="m-ch1-vb" class="mono"></small>
+            </div>
+            <div class="m-cell">
+              <span class="m-lbl">CH2 加速电源</span><strong id="m-ch2-u" class="mono"></strong
+              ><small id="m-ch2-nom"></small>
+            </div>
+            <div class="m-cell" id="cell-filament">
+              <span class="m-lbl">CH3 灯丝电源</span><strong id="m-ch3-u" class="mono"></strong
+              ><small id="m-ch3-i" class="mono"></small>
+            </div>
+            <div class="m-cell">
+              <span class="m-lbl">保护环 $A_2$</span><strong class="standby">上排表待机</strong
+              ><small>直连 $U_a^+$</small>
+            </div>
+            <div class="m-cell is-hero">
+              <span class="m-lbl">数字毫伏表 · 中央阳极 $A_1$</span
+              ><strong class="vfd-num mono" id="m-a1-mv"></strong
+              ><small>$1\text{ mV}$ 对应 $1\,\mu\text{A}$ 收集电流</small>
+            </div>
+          </div>
+        </section>
+      <div class="drawer-foot"><button id="btn-open-ref" class="quiet-btn">接线与标定关系 ↗</button></div>
+    </aside>
+    <aside id="right-drawer" class="drawer" hidden>
+      <div class="drawer-head">
+        <h2>图谱与分析</h2>
+        <button id="close-right" class="close-btn" aria-label="关闭图谱分析">×</button>
+      </div>
+      <div class="stage-tabs">
+        <button class="stage-tab" data-tab="curves">扫场曲线</button
+        ><button class="stage-tab" data-tab="fit">拟合与压降</button
+        ><button class="stage-tab" data-tab="ideal">对照与疑点</button>
+      </div>
+      <section id="tab-curves" class="drawer-body">
+        <div class="chart-card" id="scan-card">
+          <div class="chart-bar">
+            <strong>收集电流 $I_{A1}$</strong><button id="btn-tog-tangent" class="tiny-pill">P5 切线</button>
+          </div>
+          <svg
+            id="scan-svg"
+            viewBox="0 0 520 330"
+            tabindex="0"
+            role="application"
+            aria-label="磁截止扫场曲线，左右方向键回放测点"
+          ></svg>
+          <div class="chart-tip" id="scan-tip" hidden></div>
+        </div>
+        <div class="mode-options">
+          <span>横轴</span><button id="axis-im">励磁电流 $I_M$</button><button id="axis-b">磁场 $B$</button>
+        </div>
+        <div id="ic-strip"></div>
+        <p id="tab1-note" class="calm-note"></p>
+        <button id="btn-curves-rest" class="sub-btn" hidden></button>
+        <button id="btn-process-entry" class="primary-btn" hidden>按讲义处理四条曲线 →</button>
+      </section>
+      <section id="tab-fit" class="drawer-body" hidden>
+        <div id="analysis-summary">
+          <h3 id="analysis-title">四档截止点与单点比荷</h3>
+          <div class="small-formula" id="single-formula"></div>
+          <div class="table-caption">比荷单位 $10^{11}\text{ C/kg}$ · 公认值 $1.759$</div>
+          <table id="em-table">
+            <thead>
+              <tr>
+                <th>$U_a$/V</th>
+                <th>$B_c$/mT</th>
+                <th id="th-em-mode">单点比荷</th>
+                <th>相对参考</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          <div id="correction-result" hidden></div>
+          <div id="paradox-actions">
+            <button id="btn-calc-single" class="primary-btn">按讲义处理四条曲线 →</button
+            ><button id="btn-plot-scatter" class="primary-btn" hidden>绘制 $B_c^2-U_a$ 散点图 →</button
+            ><button id="btn-run-fit" class="primary-btn" hidden>拟合直线 →</button>
+          </div>
+          <div id="fit-eq-box" hidden></div>
+          <button id="btn-investigate" class="sub-btn" hidden>回到实验台，查找电压偏移 →</button
+          ><button id="btn-compare" class="sub-btn" hidden>回看实测与理想趋势 →</button>
+        </div>
+        <div id="analysis-visual">
+          <div id="construction-panel" class="chart-card">
+            <div class="chart-bar">
+              <strong>平台 · 切线 · 交点</strong><span id="construction-label"></span>
+            </div>
+            <svg id="construction-svg" viewBox="0 0 700 400" aria-label="逐档绘出平台、切线与交点"></svg>
+          </div>
+          <div id="fit-card" class="chart-card" hidden>
+            <div class="chart-bar"><strong>$B_c^2-U_a$</strong><span id="fit-status"></span></div>
+            <svg id="fit-svg" viewBox="0 0 700 460" aria-label="临界磁场平方对加速电压散点与直线拟合"></svg>
+          </div>
+        </div>
+      </section>
+      <section id="tab-ideal" class="drawer-body" hidden>
+        <div class="comparison-head">
+          <h3>实测曲线与理想趋势</h3>
+          <button id="btn-ideal-scope" class="tiny-pill">全部四档</button>
+        </div>
+        <div class="comparison-plots">
+          <div id="ideal-card" class="chart-card">
+            <div class="chart-bar">
+              <strong id="ideal-title">10 V · 完整扫场</strong><span>实线：实测　虚线：理想</span>
+            </div>
+            <svg id="ideal-svg" viewBox="0 0 650 390" aria-label="实测与有效电压理想阶跃对照"></svg>
+          </div>
+          <div id="bump-card" class="chart-card">
+            <div class="chart-bar"><strong>截止前局部放大</strong><span id="bump-percent"></span></div>
+            <svg id="bump-svg" viewBox="0 0 480 390" aria-label="截止前隆起局部放大，独立纵轴范围"></svg>
+          </div>
+        </div>
+        <div class="comparison-bottom">
+          <p id="p6-recall"></p>
+          <button id="btn-right-next" class="primary-btn">写入讲义 · 进入第四章 →</button>
+        </div>
+      </section>
+    </aside>
+    <section id="potential-card" hidden aria-label="灯丝电位探针">
+      <div class="potential-head">
+        <div>
+          <span class="eyebrow">沿接线看电位</span>
+          <h2>从 H 端到 K 端</h2>
+        </div>
+        <button id="potential-close" class="close-btn" aria-label="收起电位示意">×</button>
+      </div>
+      <svg id="potential-svg" viewBox="0 0 960 320" aria-label="阳极与直热灯丝纵剖面电位示意"></svg>
+      <div id="probe-options">
+        <button data-probe="H">H 端</button><button data-probe="middle">中点</button
+        ><button data-probe="K">K 端</button><button id="probe-compare">直接看三点对比</button>
+      </div>
+      <div id="potential-readout"></div>
+      <button id="probe-mean" class="sub-btn" hidden>看三点的平均电位 →</button>
+      <div id="potential-mean" hidden></div>
+      <button id="btn-apply-ueff" class="primary-btn" hidden>
+        代入 $U_{\mathrm{eff}}=U_a-U_f/2$ 重新核验 →
+      </button>
+    </section>
+    <div id="spotlight" aria-hidden="true">
+      <svg id="spotlight-dim"><path fill="#02081288" fill-rule="evenodd" /></svg>
+      <div id="spotlight-hole"></div>
+    </div>
+    <section id="dialogue-wrap" aria-label="实验引导">
+      <div id="dialogue-text"></div>
+      <div class="dialogue-actions">
+        <button id="dlg-prev" class="quiet-btn">← 上一步</button><span id="dialogue-wait"></span
+        ><button id="restore-layout" class="quiet-btn" hidden>恢复引导布局</button><button id="dlg-skip" class="quiet-btn">跳过引导</button
+        ><button id="dlg-next" class="primary-btn">继续 →</button>
+      </div>
+    </section>
+
+    <nav id="dock" aria-label="实验工具">
+      <button id="dock-book">📖 <span>实验讲义</span></button
+      ><button id="dock-left">🎛️ <span>扫场控制</span></button
+      ><button id="dock-right">📈 <span>图谱与分析</span></button
+      ><button id="dock-ref">📏 <span>标定与口径</span></button>
+    </nav>
+    <div id="modal" hidden role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal-card">
+        <div class="modal-head">
+          <h3 id="modal-title"></h3>
+          <button id="close-modal" class="close-btn" aria-label="关闭弹窗">×</button>
+        </div>
+        <div id="modal-body"></div>
+      </div>
+    </div>
+    <div id="toast" hidden></div>
+    <script type="module" src="studio.js"></script>
+  </body>
+</html>

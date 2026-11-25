@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+message: "If you use MagnetronLab or its experimental dataset in teaching or research, please cite it as below."
+title: "MagnetronLab: Interactive 3D Virtual Lab and Non-Ideal Physics Simulator for the Cylindrical Magnetron e/m Experiment"
+type: software
+version: "1.0.0"
+date-released: "2026-11-25"
+license: MIT
+keywords:
+  - physics-education
+  - magnetron-cutoff
+  - charge-to-mass-ratio
+  - vacuum-diode
+  - particle-simulation
+  - webgl
+  - threejs
+authors:
+  - family-names: "MagnetronLab"
+    given-names: "Author"
+    alias: "Please replace with your name before publishing"
+abstract: >-
+  An open-source 3D virtual laboratory and C++17 particle-dynamics simulator for
+  the cylindrical vacuum-diode magnetron cutoff (Hull method) e/m experiment.
+  Combines real dual-channel experimental measurements (central anode and guard
+  rings) with a five-layer non-ideal physical model covering filament potential
+  gradient, thermionic emission velocity, magnetic-field tilt, filament end
+  cooling, and finite open-shell Laplace fringing fields.

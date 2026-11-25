@@ -1,0 +1,8 @@
+{
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:bench": "node tools/build_bench_asset.mjs",
+    "test": "node --test ../tests/frontend/*.test.mjs"
+  }
+}

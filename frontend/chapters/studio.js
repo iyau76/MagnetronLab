@@ -1,0 +1,20 @@
+import {createChapter4} from './chapter4.js';
+import {createChapter5} from './chapter5.js';
+import {createChapter6} from './chapter6.js';
+import {bindShell,setDrawer,setChapterHeading} from './hud.js';
+let controller=null;bindShell();
+const TITLES={4:'04 零倾角消融与微观破案',5:'05 对称性的破缺与长尾',6:'06 综合实验、模型边界与科研闭环'};
+window.initialize=(bridge,saved,assets,calibration,chapter=4)=>{
+  controller?.suspend();document.body.dataset.chapter=chapter;delete document.body.dataset.kind;delete document.body.dataset.step;
+  document.body.dataset.layout='scene';document.body.classList.remove('plot-expanded');document.getElementById('chart-expand').textContent='放大图表';setDrawer(true);
+  for(const id of ['view-bench','view-tube'])document.getElementById(id).hidden=false;
+  setChapterHeading(chapter,TITLES[chapter]??TITLES[4]);
+  document.getElementById('clues').hidden=true;document.getElementById('dock-clues').classList.remove('active');
+  controller=({4:createChapter4,5:createChapter5,6:createChapter6}[chapter]??createChapter4)(bridge,saved,assets,calibration);
+  return document.querySelector('#viewport');
+};
+window.begin=()=>controller.begin();
+window.suspend=()=>controller?.suspend();
+window.getState=()=>controller?.getState();
+window.getDebug=()=>controller?.getDebug();
+window.scenePick=tag=>controller?.pick(tag);

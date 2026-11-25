@@ -1,0 +1,26 @@
+{
+  "anode_radius_m": 0.00455,
+  "filament_radius_m": 3.75e-05,
+  "tube_length_m": 0.035,
+  "central_collector_length_m": 0.015,
+  "filament_voltage_V": 3.428,
+  "temperature_K": 2000.0,
+  "sensitivity_anode_voltage_V": 10.0,
+  "ray_count": 2048,
+  "max_step_s": 2e-11,
+  "max_flight_time_s": 2e-06,
+  "relative_step_scale": 0.025,
+  "seed": 20260910,
+  "provenance": {
+    "anode_radius_m": "技术参数卡片：4.55 mm",
+    "filament_voltage_V": "用户数据的代表读数；每组实际值见原始数据",
+    "temperature_K": "实验说明约数，未实测",
+    "filament_radius_m": "技术参数卡片：37.5 μm",
+    "tube_length_m": "照片重建后采用：10+15+10 mm；此处同时作为均匀发射域和线性电压域，是模型假设",
+    "central_collector_length_m": "带尺照片透视重建后采用15 mm，用户于决赛复盘确认",
+    "emission_profile": "沿灯丝均匀发射；径向速度按表面通量分布，切向和轴向按高斯分布",
+    "end_boundaries": "解析圆柱域截断；轴向出口吸收，端面电势取解析解；并非实际端部场",
+    "outer_electrodes": "中央收集段与两侧段同半径、同电势，无绝缘缝隙；分别统计撞击",
+    "space_charge": "本阶段关闭；不模拟集体不稳定性"
+  }
+}

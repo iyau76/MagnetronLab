@@ -1,0 +1,177 @@
+/* 引导实验 · 与首页同一套语言：纸色底、墨色字、细线分割、等宽数字。
+   记号（--paper/--ink/--line/--teal…）定义在 style.css，这里只做本模块的排版。 */
+
+.learning-lab{color:var(--ink);background:var(--paper);min-width:0;line-height:1.75}
+.learning-lab *{box-sizing:border-box}
+.learning-lab button,.learning-lab input,.learning-lab select,.learning-lab textarea{font:inherit}
+.learning-lab button{cursor:pointer}
+.learning-lab button:disabled{cursor:default;opacity:.5}
+.learning-lab :focus-visible{outline:3px solid var(--amber);outline-offset:3px}
+.learning-lab .ll-shell{max-width:1400px;margin:auto;padding:22px var(--shell) 26px}
+
+/* ── 步骤导航 ───────────────────────────────────────────── */
+.learning-lab .ll-stage-nav{display:flex;gap:0;overflow-x:auto;overflow-y:hidden;border-top:1px solid var(--line-strong);border-bottom:1px solid var(--line-strong)}
+.learning-lab .ll-stage-nav button{flex:1;white-space:nowrap;border:0;border-right:1px solid var(--line);background:none;color:var(--ink-soft);
+  padding:16px 14px;font-size:13px;letter-spacing:.02em;text-align:left;position:relative;transition:background .16s}
+.learning-lab .ll-stage-nav button:last-child{border-right:0}
+.learning-lab .ll-stage-nav button span{display:block;font:11px/1 var(--mono);letter-spacing:.18em;color:var(--muted);margin-bottom:7px}
+.learning-lab .ll-stage-nav button:hover{background:#eceee6}
+.learning-lab .ll-stage-nav button.is-active{background:var(--panel);color:var(--teal-deep);font-weight:600}
+.learning-lab .ll-stage-nav button.is-active span{color:var(--teal)}
+.learning-lab .ll-stage-nav button.is-active::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--teal)}
+.learning-lab .ll-stage-meta{display:flex;justify-content:space-between;gap:16px;margin:14px 0 0;color:var(--muted);font:11px/1.6 var(--mono);letter-spacing:.06em}
+
+/* ── 本步说明：已知 / 要得到 ────────────────────────────── */
+.learning-lab .ll-brief{max-width:920px;padding:18px 0 16px}
+.learning-lab .ll-kicker{display:flex;align-items:center;gap:12px;font:11px/1 var(--mono);letter-spacing:.22em;color:var(--teal);margin:0}
+.learning-lab .ll-kicker::before{content:"";width:32px;height:1px;background:var(--teal);flex:none}
+.learning-lab .ll-step-label{font:11px/1.7 var(--mono);letter-spacing:.14em;color:var(--teal)}
+.learning-lab .ll-brief h2{font:400 clamp(22px,2.4vw,31px)/1.3 var(--serif);letter-spacing:.01em;margin:12px 0 14px}
+.learning-lab .ll-spec{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:0;margin:0;border-top:1px solid var(--line)}
+.learning-lab .ll-spec>div{display:flex;gap:14px;align-items:baseline;padding:11px 22px 11px 0;border-right:1px solid var(--line)}
+.learning-lab .ll-spec>div:last-child{border-right:0}
+.learning-lab .ll-spec dt{flex:none;font:11px/1.9 var(--mono);letter-spacing:.12em;color:var(--teal-deep)}
+.learning-lab .ll-spec dd{margin:0;font-size:13.5px;color:var(--ink-soft);line-height:1.85}
+
+/* ── 完成标志 ───────────────────────────────────────────── */
+.learning-lab .ll-check{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin:18px 0 8px;padding:14px 0 0;border-top:1px solid var(--line-strong)}
+.learning-lab .ll-check-mark{font:16px/1 var(--mono);color:var(--line-strong)}
+.learning-lab .ll-check-mark.is-met{color:var(--teal)}
+.learning-lab .ll-check p{flex:1;min-width:240px;margin:0;font-size:13px;color:var(--ink-soft)}
+.learning-lab .ll-footer{display:flex;align-items:center;gap:14px;justify-content:space-between;flex-wrap:wrap;margin:30px 0 6px;padding-top:16px;border-top:1px solid var(--line);
+  font:11px/1.6 var(--mono);letter-spacing:.05em;color:var(--muted)}
+
+/* ── 卡片与栅格 ─────────────────────────────────────────── */
+.learning-lab h3{margin:0 0 12px;font-size:15px;font-weight:600;letter-spacing:.01em}
+.learning-lab p{font-size:13px;margin:9px 0;color:var(--ink-soft);line-height:1.85}
+.learning-lab .ll-card{padding:16px 20px;border:1px solid var(--line);border-radius:2px;background:var(--panel);min-width:0}
+.learning-lab .ll-card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.learning-lab .ll-card-head h3{margin:0}
+.learning-lab .ll-tag{display:inline-block;font:10px/1.7 var(--mono);letter-spacing:.1em;padding:4px 8px;color:var(--muted);border:1px solid var(--line)}
+.learning-lab .ll-two-col{display:grid;grid-template-columns:1.3fr 1fr;gap:18px;align-items:start}
+.learning-lab .ll-principle-grid{display:grid;grid-template-columns:minmax(300px,.86fr) minmax(360px,1.14fr);gap:18px;align-items:start}
+.learning-lab .ll-three-col{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.learning-lab .ll-big-number{display:block;font:11px/1 var(--mono);letter-spacing:.2em;color:var(--teal);margin-bottom:14px}
+.learning-lab .ll-reading>h3{margin-top:14px}
+.learning-lab .ll-rule{height:1px;background:var(--line);margin:22px 0}
+.learning-lab .ll-multi,.learning-lab .ll-reflection{margin-top:18px}
+
+/* ── 接线图 ─────────────────────────────────────────────── */
+.learning-lab .ll-schematic{display:block;width:100%;height:auto;margin:2px 0 10px}
+.learning-lab .ll-schematic text{font:14px var(--sans);fill:var(--ink)}
+.learning-lab .ll-schematic .ll-sym{font:600 16px var(--mono);fill:var(--teal-deep)}
+.learning-lab .ll-schematic .ll-note{font:13.5px var(--sans);fill:var(--muted)}
+.learning-lab .ll-schematic .ll-wire{fill:none;stroke:#4a615c;stroke-width:1.6;stroke-linecap:square}
+.learning-lab .ll-schematic .ll-junction{fill:#4a615c}
+.learning-lab .ll-schematic .ll-envelope{fill:#f7f9f3;stroke:#b9c4bd;stroke-width:1.4}
+.learning-lab .ll-schematic .ll-part{fill:#c8d2cc;transition:fill .18s}
+.learning-lab .ll-schematic .lead-heater{fill:none;stroke:#93a29c;stroke-width:3;stroke-linejoin:round;transition:stroke .18s}
+.learning-lab .ll-schematic[data-live~="heater"] .lead-heater{stroke:#b4813c}
+.learning-lab .ll-schematic[data-part="heater"] .lead-heater{stroke:var(--teal-deep);stroke-width:3.6}
+.learning-lab .ll-schematic .ll-coil{stroke:#b9c4bd;stroke-width:1.2}
+.learning-lab .ll-schematic .ll-res{fill:#fff;stroke:#4a615c;stroke-width:1.6}
+.learning-lab .ll-schematic .ll-meter{fill:#fff;stroke:#4a615c;stroke-width:1.6}
+.learning-lab .ll-schematic .ll-meter-label{font:600 13px Georgia,serif;fill:var(--ink)}
+.learning-lab .ll-schematic .ll-source path{fill:none;stroke:#4a615c;stroke-width:2.4}
+.learning-lab .ll-schematic .ll-arrow{fill:none;stroke:var(--amber);stroke-width:1.8;stroke-linejoin:round}
+/* 接通的回路：导线转暖色 */
+.learning-lab .ll-schematic[data-live~="heater"] .circ-heater,
+.learning-lab .ll-schematic[data-live~="accelerator"] .circ-accelerator,
+.learning-lab .ll-schematic[data-live~="magnet"] .circ-magnet{stroke:var(--amber)}
+/* 选中的部件：对应电极或回路加重 */
+.learning-lab .ll-schematic[data-part="heater"] .circ-heater{stroke:var(--teal-deep);stroke-width:2.6}
+.learning-lab .ll-schematic[data-part="accelerator"] .circ-accelerator{stroke:var(--teal-deep);stroke-width:2.6}
+.learning-lab .ll-schematic[data-part="magnet"] .ll-coil{stroke:var(--teal);stroke-width:2;fill:#dcebe3}
+.learning-lab .ll-schematic[data-part="anode"] .lead-anode{fill:var(--teal-deep)}
+.learning-lab .ll-schematic[data-part="guard"] .lead-guard{fill:var(--teal-deep)}
+.learning-lab .ll-part-tabs{display:flex;gap:0;flex-wrap:wrap;border-top:1px solid var(--line)}
+.learning-lab .ll-part-tabs .ll-btn{flex:1;min-width:112px;border:0;border-right:1px solid var(--line);border-bottom:1px solid var(--line);border-radius:0;
+  background:transparent;padding:13px 10px;font-size:12.5px;color:var(--ink-soft);text-align:center;min-height:auto}
+.learning-lab .ll-part-tabs .ll-btn:hover{background:#eceee6}
+.learning-lab .ll-part-tabs .ll-btn.is-active{background:#e7efe9;color:var(--teal-deep);font-weight:600;box-shadow:inset 0 -2px 0 var(--teal)}
+
+/* ── 控件 ───────────────────────────────────────────────── */
+.learning-lab .ll-btn{border:1px solid var(--line-strong);background:transparent;color:var(--teal-deep);
+  padding:11px 16px;border-radius:2px;font-size:12.5px;letter-spacing:.04em;min-height:38px;transition:background .16s,border-color .16s}
+.learning-lab .ll-btn:hover{background:#eceee6;border-color:var(--teal)}
+.learning-lab .ll-btn.ll-primary{background:var(--teal-deep);color:#fff;border-color:var(--teal-deep);font-weight:600}
+.learning-lab .ll-btn.ll-primary:hover{background:var(--teal);border-color:var(--teal)}
+.learning-lab .ll-btn.is-active{background:var(--teal-deep);border-color:var(--teal-deep);color:#fff}
+.learning-lab .ll-action-row{display:flex;gap:9px;flex-wrap:wrap;margin:12px 0 6px}
+.learning-lab .ll-toggle-list{border-top:1px solid var(--line);margin:14px 0}
+.learning-lab .ll-toggle-list label{display:flex;align-items:center;gap:11px;border-bottom:1px solid var(--line);padding:12px 2px;font-size:13px;cursor:pointer;color:var(--ink)}
+.learning-lab .ll-toggle-list input{width:15px;height:15px;accent-color:var(--teal);margin:0}
+.learning-lab .ll-toggle-list small{margin-left:auto;font:11px var(--mono);color:var(--muted)}
+.learning-lab .ll-field{display:block;font-size:12.5px;color:var(--ink-soft);margin:11px 0}
+.learning-lab .ll-field output{float:right;font:600 13px var(--mono);color:var(--teal-deep)}
+.learning-lab .ll-field input[type=range]{display:block;width:100%;accent-color:var(--teal);margin:8px 0 2px;height:16px}
+.learning-lab .ll-field input[type=number],.learning-lab .ll-field select,.learning-lab .ll-field textarea{
+  display:block;float:none;width:100%;border:1px solid var(--line-strong);border-radius:2px;background:#fff;padding:10px 11px;font-size:13px;color:var(--ink);margin-top:7px;min-height:40px}
+.learning-lab .ll-field textarea{resize:vertical;line-height:1.8}
+.learning-lab .ll-bound-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0 4px}
+.learning-lab .ll-progress{height:3px;background:#e3e5db;margin:14px 0 6px;border-radius:0;overflow:hidden}
+.learning-lab .ll-progress i{display:block;height:100%;width:0;background:var(--teal);transition:width .2s}
+.learning-lab .ll-fine{font-size:11.5px!important;color:var(--muted)!important;line-height:1.85}
+
+/* ── 图 ─────────────────────────────────────────────────── */
+.learning-lab .ll-equation{padding:10px 16px;text-align:center;background:#eef1e9;color:var(--ink);border-radius:2px;
+  font:16px/1.6 var(--serif);margin:16px 0;overflow-wrap:anywhere}
+.learning-lab .ll-orbit{display:block;width:100%;max-width:300px;margin:0 auto}
+.learning-lab .ll-orbit text{font:11px var(--sans);fill:var(--muted)}
+.learning-lab .ll-chart{display:block;width:100%;height:auto;margin:16px 0;overflow:visible}
+.learning-lab .ll-chart text{font:10px var(--mono);fill:var(--muted)}
+.learning-lab .ll-gridline{stroke:#e4e6dc;stroke-width:1}
+.learning-lab .ll-interval{fill:var(--amber);opacity:.16}
+
+/* ── 读数 ───────────────────────────────────────────────── */
+.learning-lab .ll-readouts{display:grid;grid-template-columns:1fr 1fr;gap:8px;background:#eef1e9;padding:11px 15px;border-radius:2px;margin:9px 0 12px}
+.learning-lab .ll-readouts span{display:block;font:10px/1.6 var(--mono);letter-spacing:.1em;color:var(--muted)}
+.learning-lab .ll-readouts strong{display:block;font:400 23px/1.25 var(--mono);font-variant-numeric:tabular-nums;color:var(--teal-deep)}
+.learning-lab .ll-readouts small{font-size:12px;font-weight:400;color:var(--muted)}
+.learning-lab .ll-instrument{background:#16242a;color:#cfe0d6;padding:18px 22px;border-radius:2px;margin:16px 0}
+.learning-lab .ll-instrument span{display:block;font:10px/1.7 var(--mono);letter-spacing:.1em;color:#8fa8a0}
+.learning-lab .ll-instrument strong{display:block;font:400 34px/1.45 var(--mono);letter-spacing:.02em;color:#d9e8c4;margin-bottom:12px}
+.learning-lab .ll-instrument strong:last-child{margin-bottom:0}
+.learning-lab .ll-result{margin:16px 0;padding:16px 18px;border-left:2px solid var(--teal);background:#eff3ea}
+.learning-lab .ll-result span{display:block;font:10px/1.7 var(--mono);letter-spacing:.12em;color:var(--muted)}
+.learning-lab .ll-result strong{display:block;font:400 19px/1.5 var(--mono);color:var(--teal-deep);margin:4px 0 6px;overflow-wrap:anywhere}
+.learning-lab .ll-result p{margin:0;font-size:12px}
+.learning-lab .ll-fit-summary{font-size:12.5px}
+
+/* ── 表格 ───────────────────────────────────────────────── */
+.learning-lab .ll-table-wrap{overflow-x:auto;margin:16px 0 4px}
+.learning-lab .ll-table{width:100%;border-collapse:collapse;font-size:12.5px}
+.learning-lab .ll-table th{font:400 11px/1.6 var(--mono);letter-spacing:.06em;color:var(--muted);text-align:right;padding:8px 8px;border-bottom:1px solid var(--line-strong)}
+.learning-lab .ll-table td{text-align:right;padding:8px 8px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums;color:var(--ink-soft)}
+.learning-lab .ll-table th:first-child,.learning-lab .ll-table td:first-child{text-align:left}
+.learning-lab .ll-table tr:last-child td{border-bottom:0}
+.learning-lab .ll-empty{text-align:left!important;color:var(--muted)}
+
+/* ── 提示 ───────────────────────────────────────────────── */
+.learning-lab .ll-feedback{padding:13px 16px;background:#f3efe2;border-left:2px solid var(--amber);border-radius:0;margin:16px 0 4px;font-size:12.5px;line-height:1.85;color:#6f5c35}
+.learning-lab .ll-feedback.is-good{background:#eaf1e7;border-color:var(--teal);color:var(--teal-deep)}
+.learning-lab details{font-size:12.5px;margin:16px 0}
+.learning-lab summary{color:var(--teal-deep);cursor:pointer;font-size:12.5px;line-height:1.9}
+.learning-lab details p{font-size:12.5px;color:var(--ink-soft)}
+.learning-lab .ll-raw{padding:16px 20px}
+.learning-lab .ll-raw summary{font-weight:600}
+.learning-lab .ll-reflection{display:grid;grid-template-columns:1.5fr 1fr;gap:26px;align-items:start}
+.learning-lab .ll-reflection-side{border-left:1px solid var(--line);padding-left:22px}
+.learning-lab .ll-reflection-side p{font-size:12.5px;margin:10px 0}
+.learning-lab .ll-reflection-side ol{margin:0;padding-left:20px;font-size:12.5px;line-height:2;color:var(--ink-soft)}
+
+/* ── 响应式 ─────────────────────────────────────────────── */
+@media(max-width:1000px){
+.learning-lab .ll-two-col,.learning-lab .ll-principle-grid,.learning-lab .ll-reflection{grid-template-columns:1fr}
+.learning-lab .ll-three-col{grid-template-columns:1fr}
+.learning-lab .ll-reflection-side{border-left:0;padding-left:0;border-top:1px solid var(--line);padding-top:16px}
+.learning-lab .ll-bound-grid{grid-template-columns:1fr}
+.learning-lab .ll-stage-nav button{padding:13px 10px;font-size:12px}
+}
+@media(max-width:650px){
+.learning-lab .ll-shell{padding:16px 18px 20px}
+.learning-lab .ll-brief{padding:20px 0 18px}
+.learning-lab .ll-spec>div{border-right:0;border-bottom:1px solid var(--line);padding:12px 0}
+.learning-lab .ll-card{padding:16px 16px}
+.learning-lab .ll-part-tabs .ll-btn{min-width:50%}
+}

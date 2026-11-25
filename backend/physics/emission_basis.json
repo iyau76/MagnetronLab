@@ -1,0 +1,21 @@
+{
+  "generator": "scripts/generate_emission_basis.py",
+  "source": "magnetron_model.emission_samples",
+  "source_sha256": "148f775fc00f1e3487d946f94c1fd7f1343a95f0b7f0dcda14c018585e430db3",
+  "seed": 20260910,
+  "count": 32768,
+  "temperature_K": 1.0,
+  "filament_radius_m": 1.0,
+  "tube_length_m": 1.0,
+  "basis_sha256": "06353a844de415318202a1944bc9952463cd403675dfeca326bc87334e4fdb6e",
+  "shape": [
+    32768,
+    6
+  ],
+  "dtype": "float64",
+  "python": "3.12.9",
+  "numpy": "2.2.6",
+  "scipy": "1.15.3",
+  "scaling": "xy *= filament_radius_m; z *= tube_length_m; velocity_xyz *= sqrt(temperature_K)",
+  "roundoff": "Direct and scaled generation differ only by floating point operation ordering."
+}

@@ -1,0 +1,2067 @@
+<!DOCTYPE html>
+<html data-surface="book" lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>磁截止实验室 · 实验讲义交互预览</title>
+<style>
+  :root {
+    --desk-deep: #0b1119;
+    --desk-mid: #141e2b;
+    --paper-ivory: #f6f1e7;
+    --paper-warm: #ede5d4;
+    --paper-edge: #dfd4be;
+    --ink-main: #1b222a;
+    --ink-sub: #47525e;
+    --ink-muted: #767d85;
+    --copper: #b85d19;
+    --amber: #d4882a;
+    --amber-glow: #f2b441;
+    --field-b: #1e5b7a;
+    --field-e: #1a7a56;
+    --rule-line: rgba(27, 34, 42, 0.13);
+    --rule-strong: rgba(27, 34, 42, 0.24);
+    --font-serif: "Source Han Serif SC", "Noto Serif SC", "Songti SC", "STSong", Georgia, serif;
+    --font-sans: "PingFang SC", "Noto Sans SC", "Microsoft YaHei", system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", "Cascadia Mono", Consolas, monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background:
+      radial-gradient(ellipse 90% 70% at 50% 42%, rgba(36, 59, 85, 0.42), transparent 68%),
+      radial-gradient(circle at 18% 82%, rgba(184, 93, 25, 0.10), transparent 45%),
+      linear-gradient(160deg, #090e15 0%, #101924 55%, #080d14 100%);
+    color: var(--ink-main);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* 模拟底层虚化 3D 实验台与顶/底 HUD 语境 */
+  .sim-backdrop {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .sim-grid {
+    position: absolute;
+    left: -10%;
+    right: -10%;
+    bottom: -18%;
+    height: 56%;
+    background-image:
+      linear-gradient(to right, rgba(120, 165, 200, 0.06) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(120, 165, 200, 0.06) 1px, transparent 1px);
+    background-size: 56px 56px;
+    transform: perspective(760px) rotateX(62deg);
+    mask-image: linear-gradient(to top, rgba(0,0,0,0.65), transparent 90%);
+  }
+  .sim-topbar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 50px;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(9, 14, 21, 0.72);
+    border-bottom: 1px solid rgba(190, 214, 235, 0.12);
+    backdrop-filter: blur(10px);
+    color: #dbe5ef;
+    font-size: 13px;
+    z-index: 2;
+  }
+  .sim-topbar .crumb {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    letter-spacing: 0.02em;
+  }
+  .sim-topbar .crumb strong { color: #f6f1e7; font-weight: 600; }
+  .sim-topbar .crumb span.sep { color: rgba(219, 229, 239, 0.35); }
+  .sim-topbar .task-pill {
+    padding: 5px 14px;
+    border-radius: 999px;
+    background: rgba(30, 91, 122, 0.28);
+    border: 1px solid rgba(111, 178, 212, 0.3);
+    color: #cde6f5;
+    font-size: 12px;
+  }
+  .sim-topbar .preview-badge {
+    font-size: 11px;
+    color: #93a7bc;
+    padding: 4px 10px;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 6px;
+  }
+
+  .sim-dock {
+    position: fixed;
+    bottom: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    padding: 6px 10px;
+    background: rgba(14, 21, 31, 0.8);
+    border: 1px solid rgba(190, 214, 235, 0.14);
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+    z-index: 2;
+    opacity: 0.58;
+    pointer-events: none;
+  }
+  .sim-dock span {
+    padding: 5px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    color: #8fa3b8;
+  }
+  .sim-dock span.active {
+    background: rgba(212, 136, 42, 0.2);
+    border: 1px solid rgba(212, 136, 42, 0.45);
+    color: #f6d59e;
+  }
+
+  /* 书本整体舞台 */
+  .book-stage {
+    position: fixed;
+    inset: 54px 24px 60px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+  }
+
+  /* 顶沿书签条 */
+  .book-header-bar {
+    width: min(1240px, 94vw);
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding: 0 18px;
+    margin-bottom: -1px;
+    z-index: 4;
+  }
+  .spread-tabs {
+    display: flex;
+    gap: 6px;
+  }
+  .spread-tab {
+    appearance: none;
+    border: 1px solid rgba(246, 241, 231, 0.18);
+    border-bottom: none;
+    background: rgba(26, 36, 48, 0.82);
+    color: #9db0c4;
+    padding: 6px 16px 5px;
+    border-radius: 8px 8px 0 0;
+    font-size: 12.5px;
+    font-family: var(--font-sans);
+    cursor: pointer;
+    transition: all 0.18s ease;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .spread-tab .num {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    opacity: 0.7;
+  }
+  .spread-tab:hover {
+    background: rgba(41, 56, 73, 0.92);
+    color: #f6f1e7;
+  }
+  .spread-tab.active {
+    background: var(--paper-ivory);
+    color: var(--ink-main);
+    border-color: var(--paper-edge);
+    font-weight: 600;
+    padding-top: 8px;
+  }
+  .spread-tab.active .num {
+    color: var(--copper);
+    opacity: 1;
+  }
+
+  .book-actions-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 5px;
+  }
+  .close-book-btn {
+    appearance: none;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(17, 25, 36, 0.85);
+    color: #dce6f2;
+    padding: 5px 14px;
+    border-radius: 7px;
+    font-size: 12.5px;
+    cursor: pointer;
+    transition: all 0.16s ease;
+  }
+  .close-book-btn:hover {
+    background: rgba(34, 49, 68, 0.96);
+    border-color: rgba(212, 136, 42, 0.55);
+    color: #fff;
+  }
+
+  /* 实体硬壳开本容器 */
+  .book-shell {
+    position: relative;
+    width: min(1240px, 94vw);
+    height: min(715px, calc(100vh - 166px));
+    min-height: 545px;
+    background: #232c37;
+    padding: 7px 9px 9px 9px;
+    border-radius: 12px;
+    box-shadow:
+      0 30px 80px rgba(0, 0, 0, 0.65),
+      0 4px 16px rgba(0, 0, 0, 0.45),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    transition: transform 0.36s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.28s ease;
+  }
+  .book-shell.closed {
+    transform: translateY(42vh) scale(0.18);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* 右侧未解锁第 7 页书签耳 */
+  .locked-bookmark {
+    position: absolute;
+    right: -28px;
+    top: 84px;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    background: linear-gradient(180deg, #273240 0%, #1d2632 100%);
+    color: #a9b8c8;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-left: none;
+    border-radius: 0 8px 8px 0;
+    padding: 13px 7px;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    box-shadow: 4px 6px 16px rgba(0, 0, 0, 0.38);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: default;
+    user-select: none;
+  }
+  .locked-bookmark .lock-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgba(212, 136, 42, 0.65);
+  }
+
+  /* 纸叠厚度边 */
+  .paper-stack {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 7px;
+    background: var(--paper-ivory);
+    box-shadow:
+      inset 4px 0 0 #e3d9c5,
+      inset -4px 0 0 #e3d9c5;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    overflow: hidden;
+  }
+
+  /* 中缝书脊凹槽 */
+  .paper-stack::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 44px;
+    transform: translateX(-50%);
+    background: linear-gradient(
+      to right,
+      rgba(27, 34, 42, 0) 0%,
+      rgba(27, 34, 42, 0.055) 42%,
+      rgba(27, 34, 42, 0.14) 50%,
+      rgba(27, 34, 42, 0.055) 58%,
+      rgba(27, 34, 42, 0) 100%
+    );
+    pointer-events: none;
+    z-index: 3;
+  }
+
+  .page {
+    position: relative;
+    height: 100%;
+    padding: 16px 28px 14px 32px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at 20% 15%, rgba(255, 255, 255, 0.45), transparent 60%),
+      linear-gradient(180deg, #f7f2e8 0%, #f1eadc 100%);
+  }
+  .page.right {
+    padding: 16px 32px 14px 28px;
+  }
+
+  /* 页眉运行栏 */
+  .page-running-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 7px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--rule-line);
+    font-size: 11px;
+    color: var(--ink-muted);
+    letter-spacing: 0.06em;
+    flex-shrink: 0;
+  }
+  .page-running-head .folio {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    color: var(--copper);
+  }
+
+  .page-body {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+
+  .page-footer {
+    margin-top: 7px;
+    padding-top: 7px;
+    border-top: 1px solid var(--rule-line);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11.5px;
+    color: var(--ink-muted);
+    flex-shrink: 0;
+  }
+
+  h2.section-title {
+    margin: 0 0 8px 0;
+    font-family: var(--font-serif);
+    font-size: 19px;
+    line-height: 1.28;
+    font-weight: 700;
+    color: var(--ink-main);
+    letter-spacing: 0.01em;
+    flex-shrink: 0;
+  }
+  p.prose {
+    margin: 0 0 7px 0;
+    font-size: 12.8px;
+    line-height: 1.58;
+    color: #27303a;
+    text-align: justify;
+  }
+
+  /* 翻页与行动按钮 */
+  .btn-paper {
+    appearance: none;
+    border: 1px solid rgba(184, 93, 25, 0.38);
+    background: rgba(184, 93, 25, 0.09);
+    color: #8f420b;
+    padding: 5px 13px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.16s ease;
+    font-family: var(--font-sans);
+    white-space: nowrap;
+  }
+  .btn-paper:hover {
+    background: rgba(184, 93, 25, 0.17);
+    border-color: var(--copper);
+  }
+  .btn-primary-copper {
+    appearance: none;
+    border: none;
+    background: linear-gradient(135deg, #b85d19 0%, #99480d 100%);
+    color: #fdf9f2;
+    padding: 8px 16px;
+    border-radius: 7px;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(153, 72, 13, 0.28);
+    transition: transform 0.14s ease, box-shadow 0.14s ease;
+    font-family: var(--font-sans);
+  }
+  .btn-primary-copper:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(153, 72, 13, 0.36);
+  }
+
+  /* ==================== P1 专用 ==================== */
+  .p1-figure-box {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    margin-top: 2px;
+    border: 1px solid var(--rule-line);
+    border-radius: 8px;
+    background: rgba(255, 252, 246, 0.72);
+    padding: 6px 12px 9px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .p1-figure-caption {
+    font-size: 11.5px;
+    color: var(--ink-sub);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .pill-supplement {
+    appearance: none;
+    border: 1px solid rgba(30, 91, 122, 0.28);
+    background: rgba(246, 241, 231, 0.92);
+    color: var(--field-b);
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.16s ease;
+    white-space: nowrap;
+  }
+  .pill-supplement:hover {
+    background: rgba(30, 91, 122, 0.1);
+    border-color: var(--field-b);
+  }
+
+  .thermionic-popover {
+    position: absolute;
+    right: 12px;
+    bottom: 38px;
+    width: 84%;
+    background: #fffcf5;
+    border: 1px solid rgba(30, 91, 122, 0.34);
+    border-left: 4px solid var(--field-b);
+    border-radius: 8px;
+    padding: 11px 14px;
+    box-shadow: 0 12px 30px rgba(20, 28, 38, 0.16);
+    z-index: 6;
+    display: none;
+  }
+  .thermionic-popover.open { display: block; animation: popIn 0.18s ease; }
+  @keyframes popIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .thermionic-popover .pop-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--field-b);
+  }
+  .thermionic-popover .pop-close {
+    border: none;
+    background: none;
+    color: var(--ink-muted);
+    font-size: 15px;
+    cursor: pointer;
+    line-height: 1;
+  }
+  .thermionic-popover p {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.54;
+    color: #29323c;
+  }
+
+  /* ==================== P2 目的卡与宏微双视界（零溢出架构） ==================== */
+  .goals-stage {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .goals-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 8px;
+    flex: 1;
+    min-height: 0;
+  }
+  .goal-card {
+    border: 1px solid var(--rule-strong);
+    border-radius: 8px;
+    background: rgba(255, 253, 249, 0.78);
+    padding: 9px 11px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: all 0.16s ease;
+    text-align: left;
+  }
+  .goal-card:hover {
+    border-color: var(--copper);
+    background: #fffdf8;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(27, 34, 42, 0.07);
+  }
+  .goal-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+    font-family: var(--font-mono);
+    color: var(--copper);
+    margin-bottom: 3px;
+  }
+  .goal-card-title {
+    font-size: 12px;
+    line-height: 1.38;
+    font-weight: 600;
+    color: var(--ink-main);
+  }
+  .goal-ghost-preview {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 4px 0;
+    border-radius: 5px;
+    background: rgba(241, 234, 220, 0.4);
+    padding: 4px 8px;
+  }
+  .goal-card-status {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 5px;
+    border-top: 1px dashed var(--rule-line);
+    font-size: 11px;
+    color: var(--ink-muted);
+  }
+  .goal-card-status .tag {
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: rgba(30, 91, 122, 0.09);
+    color: var(--field-b);
+    font-weight: 600;
+  }
+
+  /* 展开单个目标时的原地替换视窗 */
+  .goal-inspector {
+    flex: 1;
+    min-height: 0;
+    border: 1px solid rgba(184, 93, 25, 0.42);
+    border-radius: 8px;
+    background: #fffcf6;
+    padding: 9px 13px;
+    display: none;
+    flex-direction: column;
+    gap: 7px;
+  }
+  .goal-inspector.open { display: flex; }
+  .goal-inspector-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid var(--rule-line);
+  }
+  .goal-mini-pills {
+    display: flex;
+    gap: 4px;
+  }
+  .goal-mini-pill {
+    border: 1px solid var(--rule-strong);
+    background: rgba(241, 234, 220, 0.65);
+    color: var(--ink-sub);
+    padding: 3px 8px;
+    border-radius: 5px;
+    font-size: 11px;
+    font-family: var(--font-mono);
+    cursor: pointer;
+  }
+  .goal-mini-pill.active {
+    background: var(--copper);
+    border-color: var(--copper);
+    color: #fff;
+  }
+  .goal-back-btn {
+    border: none;
+    background: rgba(27, 34, 42, 0.08);
+    color: var(--ink-main);
+    padding: 3px 9px;
+    border-radius: 5px;
+    font-size: 11px;
+    cursor: pointer;
+  }
+  .goal-inspector-title {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--ink-main);
+  }
+  .goal-inspector-body {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .em-placeholder {
+    border: 1.5px dashed rgba(184, 93, 25, 0.45);
+    border-radius: 8px;
+    padding: 18px 16px;
+    background: rgba(184, 93, 25, 0.05);
+    text-align: center;
+    font-family: var(--font-serif);
+    font-size: 17px;
+    color: var(--ink-main);
+  }
+  .em-placeholder span.wait {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 2px 12px;
+    border-radius: 5px;
+    background: #fff;
+    border: 1px solid var(--rule-strong);
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--copper);
+  }
+  .notes-dual {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    height: 100%;
+  }
+  .note-slot {
+    border: 1px solid var(--rule-strong);
+    border-radius: 7px;
+    background: #fffdf9;
+    padding: 7px 10px;
+    display: flex;
+    flex-direction: column;
+  }
+  .note-slot label {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--field-b);
+    margin-bottom: 4px;
+  }
+  .note-slot textarea {
+    flex: 1;
+    width: 100%;
+    border: none;
+    resize: none;
+    background: transparent;
+    font-family: var(--font-sans);
+    font-size: 12px;
+    line-height: 1.48;
+    color: var(--ink-main);
+    outline: none;
+  }
+
+  /* 宏微双视界底条 */
+  .macro-micro-strip {
+    flex-shrink: 0;
+    border: 1px solid var(--rule-strong);
+    border-radius: 8px;
+    background: rgba(255, 252, 245, 0.65);
+    padding: 7px 10px;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 8px;
+  }
+  .mm-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: rgba(241, 234, 220, 0.55);
+    border: 1px solid rgba(27, 34, 42, 0.1);
+  }
+  .mm-box strong {
+    display: block;
+    font-size: 11.5px;
+    color: var(--ink-main);
+  }
+  .mm-box small {
+    font-size: 10.5px;
+    color: var(--ink-muted);
+  }
+  .mm-slogan {
+    text-align: center;
+    font-family: var(--font-serif);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--copper);
+    line-height: 1.3;
+    padding: 0 3px;
+  }
+
+  /* ==================== P3 端面沙盘 ==================== */
+  .sandbox-lead {
+    margin: 0 0 7px 0;
+    font-size: 12.5px;
+    color: var(--ink-sub);
+    flex-shrink: 0;
+  }
+  .sandbox-split {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 10px;
+  }
+  .scope-frame {
+    position: relative;
+    border-radius: 10px;
+    background: radial-gradient(circle at 50% 50%, #102030 0%, #09131e 100%);
+    border: 1px solid #26394c;
+    box-shadow: inset 0 0 28px rgba(0, 0, 0, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .scope-frame canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  .bc-badge {
+    position: absolute;
+    top: 9px;
+    right: 9px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: rgba(242, 180, 65, 0.2);
+    border: 1px solid rgba(242, 180, 65, 0.76);
+    color: #ffd788;
+    font-size: 11px;
+    font-weight: 700;
+    box-shadow: 0 0 18px rgba(242, 180, 65, 0.28);
+    opacity: 0;
+    transform: translateY(-4px);
+    transition: all 0.2s ease;
+    pointer-events: none;
+  }
+  .bc-badge.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .scope-corner-legend {
+    position: absolute;
+    left: 10px;
+    bottom: 7px;
+    font-size: 10.5px;
+    color: #8ea7be;
+    display: flex;
+    gap: 9px;
+  }
+
+  .step-plot-card {
+    border: 1px solid var(--rule-strong);
+    border-radius: 9px;
+    background: rgba(255, 253, 248, 0.78);
+    padding: 9px 11px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .step-plot-card .mini-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink-main);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .readout-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+    margin-top: 4px;
+  }
+  .readout-cell {
+    padding: 4px 7px;
+    border-radius: 5px;
+    background: rgba(241, 234, 220, 0.6);
+    border: 1px solid var(--rule-line);
+  }
+  .readout-cell span {
+    display: block;
+    font-size: 10px;
+    color: var(--ink-muted);
+  }
+  .readout-cell strong {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink-main);
+  }
+
+  .sandbox-controls {
+    margin-top: 8px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--rule-strong);
+    background: rgba(255, 252, 246, 0.75);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .ctrl-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+  }
+  .ctrl-row label {
+    min-width: 88px;
+    font-weight: 600;
+    color: var(--ink-main);
+  }
+  .ctrl-row input[type="range"] {
+    flex: 1;
+    accent-color: var(--copper);
+    cursor: pointer;
+  }
+  .ua-pills {
+    display: flex;
+    gap: 6px;
+  }
+  .ua-pill {
+    appearance: none;
+    border: 1px solid var(--rule-strong);
+    background: #fffdf8;
+    color: var(--ink-sub);
+    padding: 3px 11px;
+    border-radius: 6px;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    cursor: pointer;
+    transition: all 0.14s ease;
+  }
+  .ua-pill.active {
+    background: var(--field-b);
+    border-color: var(--field-b);
+    color: #fff;
+    font-weight: 600;
+  }
+
+  /* ==================== P4 公式推导（适配 1280×800 零溢出） ==================== */
+  .deriv-list {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex: 1;
+    min-height: 0;
+  }
+  .deriv-step {
+    padding: 6px 11px;
+    border-radius: 7px;
+    background: rgba(255, 253, 248, 0.72);
+    border: 1px solid var(--rule-line);
+    border-left: 3px solid var(--field-b);
+  }
+  .deriv-step.final {
+    border-left-color: var(--copper);
+    background: rgba(255, 249, 240, 0.92);
+  }
+  .deriv-step-head {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--ink-main);
+    margin-bottom: 2px;
+  }
+  .deriv-step p {
+    margin: 0;
+    font-size: 11.5px;
+    line-height: 1.42;
+    color: #29323c;
+  }
+  .math-line {
+    margin-top: 3px;
+    padding: 3px 6px;
+    border-radius: 5px;
+    background: rgba(27, 34, 42, 0.04);
+    font-family: "Cambria Math", "STIX Two Math", "Times New Roman", serif;
+    font-size: 13.5px;
+    color: #131a22;
+    text-align: center;
+  }
+  .ua-live-strip {
+    margin-top: auto;
+    padding: 6px 11px;
+    border-radius: 7px;
+    border: 1px solid rgba(184, 93, 25, 0.34);
+    background: rgba(184, 93, 25, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11.5px;
+    color: #7c3708;
+    flex-shrink: 0;
+  }
+  .ua-live-strip strong {
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+
+  /* ==================== P5 数据处理 ==================== */
+  .compare-duo {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 9px;
+    flex-shrink: 0;
+  }
+  .chart-card {
+    border: 1px solid var(--rule-strong);
+    border-radius: 8px;
+    background: #fffdf9;
+    padding: 7px 9px 5px;
+  }
+  .chart-card .c-head {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--ink-main);
+    margin-bottom: 3px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .chart-card .c-head span {
+    font-weight: 400;
+    font-size: 10.5px;
+    color: var(--ink-muted);
+  }
+  .p5-callout {
+    margin-top: auto;
+    padding: 8px 12px;
+    border-radius: 7px;
+    border-left: 3px solid var(--copper);
+    background: rgba(184, 93, 25, 0.07);
+    font-family: var(--font-serif);
+    font-size: 12.8px;
+    line-height: 1.5;
+    color: #71340a;
+  }
+
+  /* ==================== P6 6选1 直觉预测 ==================== */
+  .guess-grid {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 9px;
+  }
+  .guess-card {
+    position: relative;
+    appearance: none;
+    border: 1px solid var(--rule-strong);
+    border-radius: 8px;
+    background: #fffdf8;
+    padding: 7px 9px 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.16s ease;
+    font-family: var(--font-sans);
+  }
+  .guess-card:hover {
+    border-color: var(--copper);
+    transform: translateY(-1px);
+    box-shadow: 0 5px 14px rgba(27, 34, 42, 0.08);
+  }
+  .guess-card.selected {
+    border: 1.5px solid var(--copper);
+    background: #fff8ee;
+    box-shadow: 0 0 0 2px rgba(184, 93, 25, 0.14);
+  }
+  .guess-card svg {
+    width: 100%;
+    flex: 1;
+    min-height: 0;
+    margin-bottom: 4px;
+  }
+  .guess-card .g-title {
+    font-size: 11.5px;
+    font-weight: 600;
+    line-height: 1.32;
+    color: var(--ink-main);
+    flex-shrink: 0;
+  }
+  .guess-card .stamp {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid rgba(184, 93, 25, 0.5);
+    color: var(--copper);
+    background: rgba(255, 248, 238, 0.94);
+    display: none;
+  }
+  .guess-card.selected .stamp { display: inline-block; }
+
+  .p6-closing-bar {
+    flex-shrink: 0;
+    padding: 9px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--rule-strong);
+    background: rgba(255, 252, 245, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .p6-closing-bar span.note {
+    font-family: var(--font-serif);
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--ink-sub);
+  }
+
+  /* 折页切换显隐 */
+  .spread { display: none; }
+  .spread.active { display: contents; }
+
+  /* 模拟收起书本后的反馈浮卡 */
+  .reopen-toast {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(16, 24, 35, 0.94);
+    border: 1px solid rgba(212, 136, 42, 0.45);
+    border-radius: 12px;
+    padding: 20px 26px;
+    color: #eef3f8;
+    text-align: center;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.65);
+    z-index: 20;
+    display: none;
+  }
+  .reopen-toast.visible { display: block; }
+  .reopen-toast p { margin: 8px 0 14px; font-size: 13px; color: #b7c7d8; }
+
+  math { font-family: "Cambria Math", "STIX Two Math", "Times New Roman", serif; font-size: 13.5px; }
+
+  html,body{background:transparent}
+  .book-stage{inset:54px 24px 60px}
+  :root{--font-serif:"Source Han Serif SC","Noto Serif SC","SimSun","STSong",Georgia,serif}
+  button:disabled{opacity:.42;cursor:default}
+  button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid #b85d19;outline-offset:3px}
+  .p6-closing-bar{flex-wrap:wrap}.p6-closing-bar .btn-primary-copper{margin-left:auto}
+  @media(max-width:1100px){
+    .page{padding:12px 18px 12px 22px}.page.right{padding:12px 22px 12px 18px}
+    h2.section-title{font-size:17px}p.prose{font-size:12px;line-height:1.5}
+    .spread-tab{padding:6px 10px;font-size:11px}
+  }
+
+  p.prose{font-size:14px;line-height:1.6}
+  .deriv-step-head{font-size:13px}.deriv-step p{font-size:13px;line-height:1.5}
+  .math-line math{font-size:16px}
+  @media(max-height:820px){.deriv-step-head,.deriv-step p{font-size:12px}.math-line math{font-size:14px}p.prose{font-size:13px}}
+  @media(max-width:1100px){
+    p.prose{font-size:12px;line-height:1.5}
+    .deriv-step{padding:4px 8px}.deriv-step p{font-size:11.5px;line-height:1.35}
+    .deriv-step-head{font-size:12px}.math-line{margin-top:2px;padding:2px 3px}.math-line math{font-size:12px}
+    .ua-live-strip{font-size:10px;padding:5px 8px;gap:10px}.ua-live-strip strong{font-size:10px}
+    .step-plot-card .mini-title{font-size:10px;flex-direction:column;align-items:flex-start;gap:3px}.readout-cell strong{font-size:10.5px}
+  }
+</style>
+<style>
+ .deriv-list .math-line {display:flex;flex-wrap:wrap;justify-content:center;gap:5px 14px;padding:4px 2px;margin-top:3px}
+ .deriv-list .math-line math {font-size:17px;margin:0;math-style:normal}
+ .deriv-step p {text-wrap:pretty}
+ .deriv-list {flex:1 0 auto;min-height:auto;margin-bottom:8px}
+ .goal-ghost-preview {font-size:12px}
+ @media(max-height:820px){.deriv-list{gap:5px}.deriv-step{padding:5px 9px}.deriv-list .math-line math{font-size:15px}.deriv-step p{line-height:1.4}}
+ @media(max-width:1100px){.deriv-list .math-line math{font-size:13px}.deriv-list .math-line{gap:2px;padding:2px}.deriv-step{padding:4px 7px}}
+ @media(max-height:760px){.book-stage{inset:36px 24px 34px}.book-shell{height:calc(100vh - 118px);min-height:0;flex-shrink:0}}
+</style><link rel="stylesheet" href="../compact.css"><script defer src="../compact.js"></script></head>
+<body>
+
+<div id="topGuide" hidden></div>
+
+<main class="book-stage">
+  <div class="book-header-bar">
+    <nav class="spread-tabs" aria-label="讲义页签">
+      <button class="spread-tab active" data-spread="0"><span class="num">P1–P2</span> 装置与实验目的</button>
+      <button class="spread-tab" data-spread="1"><span class="num">P3–P4</span> 磁截止原理</button>
+      <button class="spread-tab" data-spread="2"><span class="num">P5–P6</span> 数据处理与预判</button>
+    </nav>
+    <div class="book-actions-top">
+      <button class="close-book-btn" id="btnCloseTop">收起讲义</button>
+    </div>
+  </div>
+
+  <div class="book-shell" id="bookShell">
+    <div class="locked-bookmark" title="第 2–4 章推进后解锁">
+      <span class="lock-dot"></span>
+      <span>第 7 页起：破案手账 · 随实验进展解锁</span>
+    </div>
+
+    <div class="paper-stack">
+      <!-- ==================== 第一折：P1 – P2 ==================== -->
+      <div class="spread active" data-spread="0">
+        <!-- P1 左页 -->
+        <section class="page left">
+          <div class="page-running-head">
+            <span>磁截止实验室 · 实验讲义</span>
+            <span class="folio">P1</span>
+          </div>
+          <div class="page-body">
+            <h2 class="section-title">从爱迪生效应到正交电磁场截止</h2>
+            <p class="prose">
+              真空二极管是最早的电子器件，1883 年爱迪生在灯泡内观察到热电子发射，1904 年弗莱明据此制成第一只真空二极管，用于无线电检波。尽管现如今，作为常规整流器件的玻璃真空二极管已经被半导体二极管广泛替代，其中的物理学原理——带电粒子在复合电磁场中的运动、磁偏转与磁截止，仍然是磁控管、回旋管、磁控溅射镀膜与磁约束核聚变的底层原理。
+            </p>
+            <p class="prose">
+              图 1 是一只真空二极管的简化示意图，中心的钨丝在通过电流后发热，电子逸出，在径向加速电压下会加速冲向阳极被收集。沿着轴向施加一个匀强磁场，电子就会在正交电磁场中发生偏转，当磁场足够强时，电子会在撞到阳极前折返，收集电流骤降，这就是磁截止效应。
+            </p>
+
+            <div class="p1-figure-box">
+              <svg viewBox="0 0 480 205" width="100%" height="100%" style="max-height:185px">
+                <defs>
+                  <linearGradient id="cylOuter" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#8b9aa8" stop-opacity="0.22"/>
+                    <stop offset="28%" stop-color="#d7e1ea" stop-opacity="0.14"/>
+                    <stop offset="72%" stop-color="#697887" stop-opacity="0.26"/>
+                    <stop offset="100%" stop-color="#4e5d6c" stop-opacity="0.34"/>
+                  </linearGradient>
+                  <linearGradient id="filamentGlow" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stop-color="#c96e1c"/>
+                    <stop offset="50%" stop-color="#ffbb55"/>
+                    <stop offset="100%" stop-color="#c96e1c"/>
+                  </linearGradient>
+                  <marker id="arrE" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                    <path d="M0,1 L9,5 L0,9 z" fill="#1a7a56"/>
+                  </marker>
+                  <marker id="arrB" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                    <path d="M0,1 L9,5 L0,9 z" fill="#1e5b7a"/>
+                  </marker>
+                  <marker id="arrElec" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                    <path d="M0,1 L9,5 L0,9 z" fill="#b85d19"/>
+                  </marker>
+                </defs>
+
+                <!-- 轴向磁场 B -->
+                <g stroke="#1e5b7a" stroke-width="1.5" stroke-dasharray="5 3" opacity="0.85">
+                  <line x1="58" y1="26" x2="408" y2="26" marker-end="url(#arrB)"/>
+                  <line x1="48" y1="180" x2="408" y2="180" marker-end="url(#arrB)"/>
+                </g>
+                <text x="415" y="30" font-size="13" font-weight="700" fill="#1e5b7a" font-family="Cambria Math,serif">B</text>
+                <text x="415" y="184" font-size="11.5" fill="#1e5b7a">轴向匀强磁场</text>
+
+                <!-- 同轴单筒阳极 -->
+                <ellipse cx="145" cy="103" rx="22" ry="54" fill="none" stroke="#536373" stroke-width="1.4" stroke-dasharray="4 3"/>
+                <path d="M145,49 L345,49 A22,54 0 0,1 345,157 L145,157 A22,54 0 0,1 145,49 Z" fill="url(#cylOuter)" stroke="#3e4c5a" stroke-width="1.6"/>
+                <ellipse cx="345" cy="103" rx="22" ry="54" fill="rgba(220,230,238,0.16)" stroke="#3e4c5a" stroke-width="1.6"/>
+                <text x="368" y="61" font-size="11.5" font-weight="600" fill="#2e3b48">同轴单筒阳极</text>
+
+                <!-- 中心灯丝 -->
+                <line x1="88" y1="103" x2="395" y2="103" stroke="#9aa4ad" stroke-width="0.9" stroke-dasharray="3 3"/>
+                <line x1="138" y1="103" x2="348" y2="103" stroke="rgba(242,180,65,0.42)" stroke-width="8" stroke-linecap="round"/>
+                <line x1="138" y1="103" x2="348" y2="103" stroke="url(#filamentGlow)" stroke-width="3.2" stroke-linecap="round"/>
+                <text x="86" y="94" font-size="11.5" font-weight="600" fill="#8d4109">中心钨丝</text>
+
+                <!-- 径向电场箭头 E -->
+                <line x1="205" y1="54" x2="205" y2="91" stroke="#1a7a56" stroke-width="1.8" marker-end="url(#arrE)"/>
+                <text x="190" y="75" font-size="13" font-weight="700" fill="#1a7a56" font-family="Cambria Math,serif">E</text>
+                <line x1="205" y1="152" x2="205" y2="115" stroke="#1a7a56" stroke-width="1.8" marker-end="url(#arrE)"/>
+
+                <!-- 横截面透视轮廓约束电子偏转所在的平面 -->
+                <ellipse cx="248" cy="103" rx="22" ry="54" fill="#bd6e2510" stroke="#9d8063" stroke-width=".8" stroke-dasharray="3 4"/>
+                <path d="M 248 103 C 248 78 251 61 259 66 C 271 77 265 98 249 102" fill="none" stroke="#b85d19" stroke-width="2.2" marker-end="url(#arrElec)"/>
+                <circle cx="248" cy="103" r="3" fill="#b85d19"/>
+                <text x="278" y="126" font-size="11" font-weight="600" fill="#b85d19">电子偏转轨迹 e⁻</text>
+              </svg>
+
+              <div class="p1-figure-caption">
+                <span><strong>图 1</strong> 同轴单筒真空二极管正交电磁场示意</span>
+                <button class="pill-supplement" id="btnThermionic">补充：电子怎么从灯丝出来的？</button>
+              </div>
+
+              <div class="thermionic-popover" id="thermionicCard">
+                <div class="pop-head">
+                  <span>热电子发射与钨丝功函数</span>
+                  <button class="pop-close" id="btnCloseThermionic" aria-label="关闭">×</button>
+                </div>
+                <p>
+                  常温下，金属内部自由电子被表面势垒束缚；将钨丝通电加热到约 <strong>T ≈ 2000 K</strong> 时，电子按理查德森热发射规律
+                  <span style="font-family:Cambria Math,serif">J = A T² exp(−W / k<sub>B</sub> T)</span>（钨的功函数 <strong>W ≈ 4.5 eV</strong>）跃过势垒逸出表面。将灯丝加热电流保持在恒流档后，即可把注意力放在这些已逸出电子进入正交电磁场后的偏转行为上。
+                </p>
+              </div>
+            </div>
+          </div>
+          <div class="page-footer">
+            <span>物理缘起</span>
+            <span>1 / 6</span>
+          </div>
+        </section>
+
+        <!-- P2 右页 -->
+        <section class="page right">
+          <div class="page-running-head">
+            <span>实验目的与探究方式</span>
+            <span class="folio">P2</span>
+          </div>
+          <div class="page-body">
+            <h2 class="section-title" style="margin-bottom:7px;">实验目的与全章探究路径</h2>
+
+            <div class="goals-stage">
+              <div class="goals-grid" id="goalsGrid">
+                <button class="goal-card" data-goal="0">
+                  <div>
+                    <div class="goal-card-head"><span>目的 01</span><span>点击展开空坐标 ↗</span></div>
+                    <div class="goal-card-title">进行磁场标定，探究线圈产生磁场随励磁电流的关系</div>
+                  </div>
+                  <div class="goal-ghost-preview">
+                    <svg viewBox="0 0 180 48" width="100%" height="44">
+                      <line x1="20" y1="40" x2="164" y2="40" stroke="#9aa4ad" stroke-width="1"/>
+                      <line x1="20" y1="6" x2="20" y2="40" stroke="#9aa4ad" stroke-width="1"/>
+                      <line x1="22" y1="36" x2="152" y2="12" stroke="#1e5b7a" stroke-width="1.3" stroke-dasharray="4 3" opacity="0.55"/>
+                      <text x="58" y="25" font-size="10" fill="#1e5b7a" font-family="Cambria Math,serif" opacity="0.8">B = k I<tspan baseline-shift="sub" font-size="7">M</tspan> + B<tspan baseline-shift="sub" font-size="7">0</tspan></text>
+                    </svg>
+                  </div>
+                  <div class="goal-card-status">
+                    <span>坐标：<i>I</i><sub>M</sub> / A — <i>B</i> / mT</span>
+                    <span class="tag">待采图</span>
+                  </div>
+                </button>
+
+                <button class="goal-card" data-goal="1">
+                  <div>
+                    <div class="goal-card-head"><span>目的 02</span><span>点击展开空坐标 ↗</span></div>
+                    <div class="goal-card-title">探究不同磁场条件对电子收集的影响</div>
+                  </div>
+                  <div class="goal-ghost-preview">
+                    <svg viewBox="0 0 180 48" width="100%" height="44">
+                      <line x1="20" y1="40" x2="164" y2="40" stroke="#9aa4ad" stroke-width="1"/>
+                      <line x1="20" y1="6" x2="20" y2="40" stroke="#9aa4ad" stroke-width="1"/>
+                      <text x="54" y="27" font-size="9.5" fill="#767d85">待采集</text>
+                    </svg>
+                  </div>
+                  <div class="goal-card-status">
+                    <span>坐标：<i>I</i><sub>M</sub> / A — <i>I</i><sub>e</sub> / μA</span>
+                    <span class="tag">待采图</span>
+                  </div>
+                </button>
+
+                <button class="goal-card" data-goal="2">
+                  <div>
+                    <div class="goal-card-head"><span>目的 03</span><span>点击展开结果栏 ↗</span></div>
+                    <div class="goal-card-title">利用截止关系测量电子比荷</div>
+                  </div>
+                  <div class="goal-ghost-preview">
+                    <span style="font-family:var(--font-serif); font-size:15px; color:#55606b;"><i>e / m</i> = <strong style="color:var(--copper); font-family:var(--font-mono); font-size:13px;">待测</strong></span>
+                  </div>
+                  <div class="goal-card-status">
+                    <span>由 <i>I</i><sub>C</sub> → <i>B</i><sub>c</sub> 换算</span>
+                    <span class="tag">e/m = 待测</span>
+                  </div>
+                </button>
+
+                <button class="goal-card" data-goal="3">
+                  <div>
+                    <div class="goal-card-head"><span>目的 04</span><span>点击展开双记录栏 ↗</span></div>
+                    <div class="goal-card-title">分析反常现象，拆解原理与仪器，探明成因，架起理想与现实的桥梁，培养批判性思维</div>
+                  </div>
+                  <div class="goal-ghost-preview" style="justify-content:space-around; font-size:10.5px; color:#767d85;">
+                    <span>[ 观察到的反常现象 ]</span>
+                    <span>⇄</span>
+                    <span>[ 反常现象的成因 ]</span>
+                  </div>
+                  <div class="goal-card-status">
+                    <span>双文本框实验手记</span>
+                    <span class="tag">待记录</span>
+                  </div>
+                </button>
+              </div>
+
+              <!-- 单卡原地聚焦视图 -->
+              <div class="goal-inspector" id="goalInspector">
+                <div class="goal-inspector-top">
+                  <div class="goal-mini-pills">
+                    <button class="goal-mini-pill" data-goal="0">01 标定</button>
+                    <button class="goal-mini-pill" data-goal="1">02 收集</button>
+                    <button class="goal-mini-pill" data-goal="2">03 比荷</button>
+                    <button class="goal-mini-pill" data-goal="3">04 反常</button>
+                  </div>
+                  <button class="goal-back-btn" id="btnGoalBack">返回四项总览</button>
+                </div>
+                <div class="goal-inspector-title" id="goalInspTitle"></div>
+                <div class="goal-inspector-body" id="goalInspBody"></div>
+              </div>
+
+              <!-- 下方核心玩法：宏微双视界 -->
+              <div class="macro-micro-strip">
+                <div class="mm-box">
+                  <svg width="42" height="32" viewBox="0 0 42 32">
+                    <rect x="3" y="22" width="36" height="5" rx="1.5" fill="none" stroke="#1e5b7a" stroke-width="1.3"/>
+                    <ellipse cx="14" cy="14" rx="4" ry="8" fill="none" stroke="#1e5b7a" stroke-width="1.4"/>
+                    <ellipse cx="28" cy="14" rx="4" ry="8" fill="none" stroke="#1e5b7a" stroke-width="1.4"/>
+                    <line x1="10" y1="14" x2="32" y2="14" stroke="#b85d19" stroke-width="1.5"/>
+                  </svg>
+                  <div>
+                    <strong>3D 实验台</strong>
+                    <small>调励磁、读电表、改接线</small>
+                  </div>
+                </div>
+
+                <div class="mm-slogan">
+                  从宏观看规律<br/>⇄<br/>进微观找原因
+                </div>
+
+                <div class="mm-box">
+                  <svg width="36" height="32" viewBox="0 0 36 32">
+                    <circle cx="18" cy="16" r="12" fill="none" stroke="#3e4c5a" stroke-width="1.4" stroke-dasharray="3 2"/>
+                    <circle cx="18" cy="16" r="2.2" fill="#d4882a"/>
+                    <path d="M18,16 Q26,9 29,16" fill="none" stroke="#b85d19" stroke-width="1.6"/>
+                  </svg>
+                  <div>
+                    <strong>管内微观世界</strong>
+                    <small>看电场、轨道与临界切点</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="page-footer">
+            <span>第 2–4 章得出结果后此处自动同步填入</span>
+            <button class="btn-paper" data-goto="1">翻到下一页 →</button>
+          </div>
+        </section>
+      </div>
+
+      <!-- ==================== 第二折：P3 – P4 ==================== -->
+      <div class="spread" data-spread="1">
+        <!-- P3 左页 -->
+        <section class="page left">
+          <div class="page-running-head">
+            <span>磁截止实验室 · 交互物理沙盘</span>
+            <span class="folio">P3</span>
+          </div>
+          <div class="page-body">
+            <h2 class="section-title" style="margin-bottom:3px;">正交电磁场中的轨迹偏转</h2>
+            <p class="sandbox-lead">拖动改变磁场，观察电子轨迹与收集电流的变化。</p>
+
+            <div class="sandbox-split">
+              <!-- 端面沙盘 Canvas -->
+              <div class="scope-frame">
+                <canvas id="sandboxCanvas" width="320" height="320"></canvas>
+                <div class="bc-badge" id="bcBadge">到达临界磁场 <i>B</i><sub>c</sub></div>
+                <div class="scope-corner-legend">
+                  <span style="color:#f4b350;">● 中心钨丝</span>
+                  <span style="color:#52b788;">⇢ 径向 E</span>
+                  <span style="color:#6eb5dd;">⊙ 轴向 B</span>
+                </div>
+              </div>
+
+              <!-- 理想阶跃图 + 实时参数 -->
+              <div class="step-plot-card">
+                <div class="mini-title">
+                  <span>理想截止台阶曲线</span>
+                  <span style="font-size:10.5px; color:var(--ink-muted);">相对电流 <i>I</i>/<i>I</i><sub>0</sub></span>
+                </div>
+                <svg id="stepPlotSvg" viewBox="0 0 210 148" width="100%" style="flex:1; max-height:160px;"></svg>
+                <div class="readout-grid">
+                  <div class="readout-cell">
+                    <span>当前磁场 <i>B</i></span>
+                    <strong id="roB">2.40 mT</strong>
+                  </div>
+                  <div class="readout-cell">
+                    <span>理论临界 <i>B</i><sub>c</sub></span>
+                    <strong id="roBc" style="color:var(--copper);">4.69 mT</strong>
+                  </div>
+                  <div class="readout-cell">
+                    <span>相对收集 <i>I</i>/<i>I</i><sub>0</sub></span>
+                    <strong id="roRatio" style="color:var(--field-e);">100%</strong>
+                  </div>
+                  <div class="readout-cell">
+                    <span>电子状态</span>
+                    <strong id="roState">直击阳极</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="sandbox-controls">
+              <div class="ctrl-row">
+                <label for="sliderB">轴向磁场 <i>B</i></label>
+                <input type="range" id="sliderB" min="0" max="8.0" step="0.02" value="2.40" />
+                <span style="font-family:var(--font-mono); min-width:62px; text-align:right;" id="lblB">2.40 mT</span>
+              </div>
+              <div class="ctrl-row">
+                <label>加速电压 <i>U</i><sub>a</sub></label>
+                <div class="ua-pills" id="uaPills">
+                  <button class="ua-pill" data-ua="4">4 V</button>
+                  <button class="ua-pill" data-ua="6">6 V</button>
+                  <button class="ua-pill" data-ua="8">8 V</button>
+                  <button class="ua-pill active" data-ua="10">10 V</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="page-footer">
+            <span>轨迹示意图</span>
+            <button class="btn-paper" data-goto="0">← 上一页</button>
+          </div>
+        </section>
+
+        <!-- P4 右页 -->
+        <section class="page right">
+          <div class="page-running-head">
+            <span>理想同轴圆柱比荷推导</span>
+            <span class="folio">P4</span>
+          </div>
+          <div class="page-body">
+            <h2 class="section-title" style="margin-bottom:6px;">临界条件与电子比荷测量公式</h2>
+
+            <div class="deriv-list">
+              <div class="deriv-step">
+                <div class="deriv-step-head">1. 径向电势分布</div>
+                <p>对于同轴圆柱电极，由柱对称高斯定理可得径向电势随半径对数分布：</p>
+                <div class="math-line">
+                  <math display="block"><mi>φ</mi><mrow><mo>(</mo><mi>r</mi><mo>)</mo></mrow><mo>=</mo><msub><mi>U</mi><mi>a</mi></msub><mfrac><mrow><mi>ln</mi><mrow><mo>(</mo><mi>r</mi><mo>/</mo><msub><mi>r</mi><mi>c</mi></msub><mo>)</mo></mrow></mrow><mrow><mi>ln</mi><mrow><mo>(</mo><msub><mi>R</mi><mi>a</mi></msub><mo>/</mo><msub><mi>r</mi><mi>c</mi></msub><mo>)</mo></mrow></mrow></mfrac></math>
+                </div>
+              </div>
+
+              <div class="deriv-step">
+                <div class="deriv-step-head">2. 能量守恒</div>
+                <p>电子自灯丝静止出发到达半径 <em>r</em> 处，电势能全部转化为动能；抵壁时满足：</p>
+                <div class="math-line">
+                  <math display="block"><mfrac><mn>1</mn><mn>2</mn></mfrac><mi>m</mi><mrow><mo>(</mo><msubsup><mi>v</mi><mi>r</mi><mn>2</mn></msubsup><mo>+</mo><msubsup><mi>v</mi><mi>θ</mi><mn>2</mn></msubsup><mo>)</mo></mrow><mo>=</mo><mi>e</mi><mi>φ</mi><mrow><mo>(</mo><mi>r</mi><mo>)</mo></mrow><mspace width="1.2em"/><mo>⟹</mo><mspace width="1.2em"/><msup><mi>v</mi><mn>2</mn></msup><mrow><mo>(</mo><msub><mi>R</mi><mi>a</mi></msub><mo>)</mo></mrow><mo>=</mo><mfrac><mrow><mn>2</mn><mi>e</mi><msub><mi>U</mi><mi>a</mi></msub></mrow><mi>m</mi></mfrac></math>
+                </div>
+              </div>
+
+              <div class="deriv-step">
+                <div class="deriv-step-head">3. 正则角动量守恒</div>
+                <p>由于同轴结构的轴对称性，正则角动量 <math><msub><mi>P</mi><mi>θ</mi></msub><mo>=</mo><mi>m</mi><mi>r</mi><msub><mi>v</mi><mi>θ</mi></msub><mo>−</mo><mfrac><mn>1</mn><mn>2</mn></mfrac><mi>e</mi><mi>B</mi><msup><mi>r</mi><mn>2</mn></msup></math> 守恒，代入初态得壁面切向速率：</p>
+                <div class="math-line">
+                  <math display="block"><msub><mi>v</mi><mi>θ</mi></msub><mrow><mo>(</mo><msub><mi>R</mi><mi>a</mi></msub><mo>)</mo></mrow><mo>=</mo><mfrac><mrow><mi>e</mi><mi>B</mi></mrow><mrow><mn>2</mn><mi>m</mi></mrow></mfrac><mfrac><mrow><msubsup><mi>R</mi><mi>a</mi><mn>2</mn></msubsup><mo>−</mo><msubsup><mi>r</mi><mi>c</mi><mn>2</mn></msubsup></mrow><msub><mi>R</mi><mi>a</mi></msub></mfrac></math>
+                </div>
+              </div>
+
+              <div class="deriv-step final">
+                <div class="deriv-step-head">4. 相切临界条件与比荷公式</div>
+                <p>临界轨迹恰好触及阳极内壁擦边，即 <math><msub><mi>v</mi><mi>r</mi></msub><mrow><mo>(</mo><msub><mi>R</mi><mi>a</mi></msub><mo>)</mo></mrow><mo>=</mo><mn>0</mn></math>，动能全归切向，解得：</p>
+                <div class="math-line">
+                  <math display="block"><msub><mi>B</mi><mi>c</mi></msub><mo>=</mo><msqrt><mfrac><mrow><mn>8</mn><mi>m</mi><msub><mi>U</mi><mi>a</mi></msub></mrow><mrow><mi>e</mi><msubsup><mi>R</mi><mi>a</mi><mn>2</mn></msubsup><msup><mrow><mo>[</mo><mn>1</mn><mo>−</mo><msup><mrow><mo>(</mo><msub><mi>r</mi><mi>c</mi></msub><mo>/</mo><msub><mi>R</mi><mi>a</mi></msub><mo>)</mo></mrow><mn>2</mn></msup><mo>]</mo></mrow><mn>2</mn></msup></mrow></mfrac></msqrt></math><math display="block"><mo>⟹</mo><mspace width="0.8em"/><mfrac><mi>e</mi><mi>m</mi></mfrac><mo>=</mo><mfrac><mrow><mn>8</mn><msub><mi>U</mi><mi>a</mi></msub></mrow><mrow><msubsup><mi>B</mi><mi>c</mi><mn>2</mn></msubsup><msubsup><mi>R</mi><mi>a</mi><mn>2</mn></msubsup><msup><mrow><mo>[</mo><mn>1</mn><mo>−</mo><msup><mrow><mo>(</mo><msub><mi>r</mi><mi>c</mi></msub><mo>/</mo><msub><mi>R</mi><mi>a</mi></msub><mo>)</mo></mrow><mn>2</mn></msup><mo>]</mo></mrow><mn>2</mn></msup></mrow></mfrac></math>
+                </div>
+              </div>
+            </div>
+
+            <div class="ua-live-strip" id="p4LiveStrip">
+              <span>联动当前加速电压：<strong id="p4Ua">Uₐ = 10 V</strong></span>
+              <span>理论临界磁场：<strong id="p4Bc">B_c = 4.69 mT</strong></span>
+            </div>
+          </div>
+          <div class="page-footer">
+            <span>切线临界条件与比荷理论表达式</span>
+            <button class="btn-paper" data-goto="2">翻到下一页 →</button>
+          </div>
+        </section>
+      </div>
+
+      <!-- ==================== 第三折：P5 – P6 ==================== -->
+      <div class="spread" data-spread="2">
+        <!-- P5 左页 -->
+        <section class="page left">
+          <div class="page-running-head">
+            <span>磁截止实验室 · 数据处理法</span>
+            <span class="folio">P5</span>
+          </div>
+          <div class="page-body">
+            <h2 class="section-title">数据处理：如何寻找临界磁场？</h2>
+
+            <div class="compare-duo">
+              <div class="chart-card">
+                <div class="c-head">图 A · 理想模型曲线 <span>垂直陡降</span></div>
+                <svg viewBox="0 0 215 118" width="100%">
+                  <line x1="26" y1="96" x2="202" y2="96" stroke="#3e4c5a" stroke-width="1.2"/>
+                  <line x1="26" y1="12" x2="26" y2="96" stroke="#3e4c5a" stroke-width="1.2"/>
+                  <path d="M 26 24 L 114 24 L 114 96 L 194 96" fill="none" stroke="#1e5b7a" stroke-width="2.2"/>
+                  <text x="52" y="42" font-size="10.5" fill="#1a7a56" font-weight="600">饱和区</text>
+                  <text x="142" y="84" font-size="10.5" fill="#767d85" font-weight="600">截止区</text>
+                  <text x="108" y="109" font-size="10.5" fill="#b85d19" font-weight="700" font-family="Cambria Math,serif">B<tspan baseline-shift="sub" font-size="7.5">c</tspan></text>
+                  <text x="190" y="109" font-size="10" fill="#47525e">B</text>
+                  <text x="7" y="20" font-size="10" fill="#47525e">I<tspan baseline-shift="sub" font-size="7">e</tspan></text>
+                </svg>
+              </div>
+
+              <div class="chart-card">
+                <div class="c-head">图 B · 讲义常规 S 形 <span>切线交点定 I<sub>C</sub></span></div>
+                <svg viewBox="0 0 215 118" width="100%">
+                  <line x1="26" y1="96" x2="202" y2="96" stroke="#3e4c5a" stroke-width="1.2"/>
+                  <line x1="26" y1="12" x2="26" y2="96" stroke="#3e4c5a" stroke-width="1.2"/>
+                  <!-- 过渡区底带 -->
+                  <rect x="86" y="14" width="46" height="82" fill="rgba(212,136,42,0.09)"/>
+                  <!-- S 形平滑下降 -->
+                  <path d="M 26 24 C 74 24, 92 26, 110 60 C 128 94, 146 96, 194 96" fill="none" stroke="#1b222a" stroke-width="2.2"/>
+                  <!-- 饱和平台延伸线与最陡切线 -->
+                  <line x1="26" y1="24" x2="128" y2="24" stroke="#1e5b7a" stroke-width="1.3" stroke-dasharray="3.5 3"/>
+                  <line x1="84" y1="10" x2="136" y2="110" stroke="#1e5b7a" stroke-width="1.5" stroke-dasharray="4 2.5"/>
+                  <line x1="91.5" y1="24" x2="91.5" y2="96" stroke="#b85d19" stroke-width="1.3" stroke-dasharray="3 2.5"/>
+                  <circle cx="91.5" cy="24" r="3" fill="#b85d19"/>
+                  <text x="42" y="42" font-size="10" fill="#1a7a56" font-weight="600">饱和区</text>
+                  <text x="112" y="48" font-size="9.5" fill="#b85d19" font-weight="600">过渡区</text>
+                  <text x="150" y="84" font-size="10" fill="#767d85" font-weight="600">截止区</text>
+                  <text x="86" y="109" font-size="10.5" fill="#b85d19" font-weight="700" font-family="Cambria Math,serif">I<tspan baseline-shift="sub" font-size="7.5">C</tspan></text>
+                  <text x="190" y="109" font-size="10" fill="#47525e">I<tspan baseline-shift="sub" font-size="7">M</tspan></text>
+                </svg>
+              </div>
+            </div>
+
+            <p class="prose">
+              理想情况下，磁场越过临界值后电流垂直掉零；但在真实实验中，收集电流往往存在一个有一定宽度的过渡区，并不是陡直的下降。为了在这种曲线上定出比荷测量所需的临界点，在标定好线圈励磁电流与磁感应强度的关系后，我们在实测的“收集电流—励磁电流”曲线中，沿着电流下降最快的一段作切线，求其与低磁场下饱和平台延长线的交点，将该交点对应的励磁电流记作临界励磁电流 <em>I<sub>C</sub></em>，随后换算为临界磁场 <em>B<sub>c</sub></em>，代入比荷公式即可算得电子比荷。
+            </p>
+
+            <div class="p5-callout">
+              实测的曲线真的如图所示吗？更多的谜题，等待着你在接下来的实验中逐步揭开。
+            </div>
+          </div>
+          <div class="page-footer">
+            <span>临界点作图法</span>
+            <button class="btn-paper" data-goto="1">← 上一页</button>
+          </div>
+        </section>
+
+        <!-- P6 右页 -->
+        <section class="page right">
+          <div class="page-running-head">
+            <span>实验前直觉立据</span>
+            <span class="folio">P6</span>
+          </div>
+          <div class="page-body">
+            <h2 class="section-title" style="margin-bottom:7px;">实验前，凭你的直觉猜测一下真实测得的截止曲线</h2>
+
+            <div class="guess-grid" id="guessGrid">
+              <button class="guess-card" data-guess="1">
+                <span class="stamp">已记入档案</span>
+                <svg viewBox="0 0 160 76" preserveAspectRatio="xMidYMid meet">
+                  <line x1="16" y1="64" x2="148" y2="64" stroke="#9ea6af" stroke-width="1"/>
+                  <line x1="16" y1="10" x2="16" y2="64" stroke="#9ea6af" stroke-width="1"/>
+                  <path d="M16,18 L82,18 L82,64 L142,64" fill="none" stroke="#1e5b7a" stroke-width="2.4"/>
+                </svg>
+                <div class="g-title">① 陡直台阶图</div>
+              </button>
+
+              <button class="guess-card" data-guess="2">
+                <span class="stamp">已记入档案</span>
+                <svg viewBox="0 0 160 76" preserveAspectRatio="xMidYMid meet">
+                  <line x1="16" y1="64" x2="148" y2="64" stroke="#9ea6af" stroke-width="1"/>
+                  <line x1="16" y1="10" x2="16" y2="64" stroke="#9ea6af" stroke-width="1"/>
+                  <path d="M16,18 C56,18 70,20 82,41 C94,62 108,64 142,64" fill="none" stroke="#1e5b7a" stroke-width="2.4"/>
+                </svg>
+                <div class="g-title">② S 形曲线</div>
+              </button>
+
+              <button class="guess-card" data-guess="3">
+                <span class="stamp">已记入档案</span>
+                <svg viewBox="0 0 160 76" preserveAspectRatio="xMidYMid meet">
+                  <line x1="16" y1="64" x2="148" y2="64" stroke="#9ea6af" stroke-width="1"/>
+                  <line x1="16" y1="10" x2="16" y2="64" stroke="#9ea6af" stroke-width="1"/>
+                  <path d="M16,18 C54,18 68,21 80,40 C92,53 108,51 142,49" fill="none" stroke="#1e5b7a" stroke-width="2.4"/>
+                </svg>
+                <div class="g-title">③ S 形曲线但尾部抬高</div>
+              </button>
+
+              <button class="guess-card" data-guess="4">
+                <span class="stamp">已记入档案</span>
+                <svg viewBox="0 0 160 76" preserveAspectRatio="xMidYMid meet">
+                  <line x1="16" y1="64" x2="148" y2="64" stroke="#9ea6af" stroke-width="1"/>
+                  <line x1="16" y1="10" x2="16" y2="64" stroke="#9ea6af" stroke-width="1"/>
+                  <path d="M16,24 C46,24 60,11 72,13 C82,15 88,64 108,64 L142,64" fill="none" stroke="#1e5b7a" stroke-width="2.4"/>
+                </svg>
+                <div class="g-title">④ 截止前有隆起、无拖尾</div>
+              </button>
+
+              <button class="guess-card" data-guess="5">
+                <span class="stamp">已记入档案</span>
+                <svg viewBox="0 0 160 76" preserveAspectRatio="xMidYMid meet">
+                  <line x1="16" y1="64" x2="148" y2="64" stroke="#9ea6af" stroke-width="1"/>
+                  <line x1="16" y1="10" x2="16" y2="64" stroke="#9ea6af" stroke-width="1"/>
+                  <path d="M16,24 C46,24 59,11 71,13 C81,15 86,47 104,53 C118,58 132,61 146,63" fill="none" stroke="#1e5b7a" stroke-width="2.4"/>
+                </svg>
+                <div class="g-title">⑤ 截止前有隆起、尾部缓降</div>
+              </button>
+
+              <button class="guess-card" data-guess="6">
+                <span class="stamp">已记入档案</span>
+                <svg viewBox="0 0 160 76" preserveAspectRatio="xMidYMid meet">
+                  <line x1="16" y1="64" x2="148" y2="64" stroke="#9ea6af" stroke-width="1"/>
+                  <line x1="16" y1="10" x2="16" y2="64" stroke="#9ea6af" stroke-width="1"/>
+                  <path d="M16,24 C46,24 59,11 71,13 C81,15 86,47 104,53 C114,54 121,54 126,54 L142,54" fill="none" stroke="#1e5b7a" stroke-width="2.4"/>
+                </svg>
+                <div class="g-title">⑥ 截止前有隆起、尾部变平</div>
+              </button>
+            </div>
+
+            <div class="p6-closing-bar">
+              <span class="note">接下来，合上讲义，认识真实的装置与电路，完成磁场标定</span>
+              <button class="btn-primary-copper" id="btnFinishManual">合上讲义 · 开始认识实验台</button>
+            </div>
+          </div>
+          <div class="page-footer">
+            <span id="guessHintText">单选自动存入实验档案，无对错判定</span>
+            <span>6 / 6</span>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+</main>
+
+
+
+
+<script type="module">
+import {idealTrajectory} from "../modules/ideal-physics.js";
+import {installChapter3Results} from "../chapter3/book-results.js";
+import {installResearchNotebook} from "../chapters/notebook.js";
+const chapter3Book=installChapter3Results();
+const researchBook=installResearchNotebook();
+(() => {
+  // ---- 折页切换 ----
+  const spreads = [...document.querySelectorAll('.spread')];
+  const tabs = [...document.querySelectorAll('.spread-tab')];
+  const topGuide = document.getElementById('topGuide');
+  const guideCopy = [
+    '当前任务：阅读实验讲义（第 1 / 3 折），建立单筒磁截止直觉',
+    '当前任务：拖动第 3 页磁场滑块，对比左图切点与右页公式推导（第 2 / 3 折）',
+    '当前任务：阅读临界点作图法并在第 6 页留下直觉猜测后合上讲义（第 3 / 3 折）'
+  ];
+  let activeSpread = 0;
+
+  function goSpread(idx) {
+    activeSpread = Math.max(0, Math.min(researchBook.maxSpread(), idx));
+    spreads.forEach((s, i) => s.classList.toggle('active', i === activeSpread));
+    tabs.forEach((t, i) => t.classList.toggle('active', i === activeSpread));
+    topGuide.textContent = guideCopy[activeSpread]??'破案手账：记录观察，提出下一步检验';
+    if(activeSpread===3)chapter3Results.syncNotes();
+    if (activeSpread === 1) { drawSandbox(); drawStepPlot(); }
+  }
+
+  tabs.forEach(t => t.addEventListener('click', () => goSpread(Number(t.dataset.spread))));
+  document.querySelectorAll('[data-goto]').forEach(b => b.addEventListener('click', () => goSpread(Number(b.dataset.goto))));
+  window.addEventListener('keydown', e => {
+    if (document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'INPUT') return;
+    if (e.key === 'ArrowRight') goSpread(activeSpread + 1);
+    if (e.key === 'ArrowLeft') goSpread(activeSpread - 1);
+  });
+
+  // ---- P1 轻浮卡 ----
+  const thermCard = document.getElementById('thermionicCard');
+  document.getElementById('btnThermionic').addEventListener('click', () => thermCard.classList.toggle('open'));
+  document.getElementById('btnCloseThermionic').addEventListener('click', () => thermCard.classList.remove('open'));
+
+  // ---- P2 四项实验目的原地聚焦 ----
+  const goalsGrid = document.getElementById('goalsGrid');
+  const goalInspector = document.getElementById('goalInspector');
+  const goalInspTitle = document.getElementById('goalInspTitle');
+  const goalInspBody = document.getElementById('goalInspBody');
+  const miniPills = [...document.querySelectorAll('.goal-mini-pill')];
+  const notesStore = { anomaly: '', cause: '' };
+
+  let calibrationResult=null;
+  const goalData = [
+    {
+      title: '1. 进行磁场标定，探究线圈产生磁场随励磁电流的关系',
+      render: () => `
+        <div style="border:1px solid rgba(27,34,42,0.16);border-radius:7px;background:#fff;padding:8px 12px;height:100%;display:flex;flex-direction:column;justify-content:center;">
+          <svg viewBox="0 0 360 155" width="100%" height="145">
+            <line x1="42" y1="128" x2="335" y2="128" stroke="#3e4c5a" stroke-width="1.3"/>
+            <line x1="42" y1="16" x2="42" y2="128" stroke="#3e4c5a" stroke-width="1.3"/>
+            <g stroke="#e6dfd1" stroke-width="1" stroke-dasharray="3 3">
+              <line x1="42" y1="90" x2="330" y2="90"/><line x1="42" y1="54" x2="330" y2="54"/>
+              <line x1="138" y1="18" x2="138" y2="128"/><line x1="234" y1="18" x2="234" y2="128"/>
+            </g>
+            <line x1="42" y1="118" x2="310" y2="30" stroke="#1e5b7a" stroke-width="1.6" stroke-dasharray="5 4" opacity="0.55"/>
+            <text x="148" y="64" font-size="13" fill="#1e5b7a" font-family="Cambria Math,serif" font-weight="600">拟定拟合：B = k I<tspan baseline-shift="sub" font-size="9">M</tspan> + B<tspan baseline-shift="sub" font-size="9">0</tspan></text>
+            <text x="142" y="84" font-size="11" fill="#767d85">（第 2 章标定完成后自动绘制实测点）</text>
+            <text x="268" y="145" font-size="11" fill="#47525e">励磁电流 I<tspan baseline-shift="sub" font-size="8">M</tspan> / A</text>
+            <text x="8" y="24" font-size="11" fill="#47525e">B / mT</text>
+          </svg>
+        </div>`
+    },
+    {
+      title: '2. 探究不同磁场条件对电子收集的影响',
+      render: () => `
+        <div style="border:1px solid rgba(27,34,42,0.16);border-radius:7px;background:#fff;padding:8px 12px;height:100%;display:flex;flex-direction:column;justify-content:center;">
+          <svg viewBox="0 0 360 155" width="100%" height="145">
+            <line x1="42" y1="128" x2="335" y2="128" stroke="#3e4c5a" stroke-width="1.3"/>
+            <line x1="42" y1="16" x2="42" y2="128" stroke="#3e4c5a" stroke-width="1.3"/>
+            <g stroke="#e6dfd1" stroke-width="1" stroke-dasharray="3 3">
+              <line x1="42" y1="90" x2="330" y2="90"/><line x1="42" y1="54" x2="330" y2="54"/>
+              <line x1="138" y1="18" x2="138" y2="128"/><line x1="234" y1="18" x2="234" y2="128"/>
+            </g>
+            <text x="114" y="74" font-size="12" fill="#767d85">等待采集各加速电压下 I<tspan baseline-shift="sub" font-size="8.5">e</tspan>(I<tspan baseline-shift="sub" font-size="8.5">M</tspan>) 实验曲线</text>
+            <text x="268" y="145" font-size="11" fill="#47525e">励磁电流 I<tspan baseline-shift="sub" font-size="8">M</tspan> / A</text>
+            <text x="6" y="24" font-size="11" fill="#47525e">收集电流 I<tspan baseline-shift="sub" font-size="8">e</tspan> / μA</text>
+          </svg>
+        </div>`
+    },
+    {
+      title: '3. 利用截止关系测量电子比荷',
+      render: () => `
+        <div class="em-placeholder">
+          电子比荷实测结果：<span style="font-family:Cambria Math,serif;">e / m</span> = <span class="wait">待测</span>
+          <div style="margin-top:10px; font-family:var(--font-sans); font-size:11.5px; color:var(--ink-muted);">
+            由标定直线 B(I<sub>M</sub>) 与截止电流 I<sub>C</sub> 换算临界磁场 B<sub>c</sub> 后自动回填
+          </div>
+        </div>`
+    },
+    {
+      title: '4. 分析反常现象，拆解原理与仪器，探明成因',
+      render: () => `
+        <div class="notes-dual">
+          <div class="note-slot">
+            <label>观察到的反常现象</label>
+            <textarea id="txtAnomaly" placeholder="待进入实测后记录：与理想台阶或常规 S 形究竟差在哪里？"></textarea>
+          </div>
+          <div class="note-slot">
+            <label>反常现象的成因</label>
+            <textarea id="txtCause" placeholder="待进入管内微观与电路拆解后总结物理机制与仪器原因…"></textarea>
+          </div>
+        </div>`
+    }
+  ];
+  const emptyCalibrationRender=goalData[0].render,emptyCalibrationPreview=document.querySelector('[data-goal="0"] .goal-ghost-preview').innerHTML;
+
+  const chapter3Results=chapter3Book.connect({goalData,notesStore,onClose:()=>send('close')});
+  researchBook.connect(()=>send('close'));
+  function openGoal(idx) {
+    goalsGrid.style.display = 'none';
+    goalInspector.classList.add('open');
+    miniPills.forEach((p, i) => p.classList.toggle('active', i === idx));
+    goalInspTitle.textContent = goalData[idx].title;
+    goalInspBody.innerHTML = goalData[idx].render();
+    if (idx === 3) {
+      document.getElementById('txtAnomaly').value=notesStore.anomaly;
+      document.getElementById('txtCause').value=notesStore.cause;
+      document.getElementById('txtAnomaly').addEventListener('input', e => notesStore.anomaly = e.target.value);
+      document.getElementById('txtCause').addEventListener('input', e => notesStore.cause = e.target.value);
+    }
+  }
+  document.querySelectorAll('.goal-card').forEach(c => c.addEventListener('click', () => openGoal(Number(c.dataset.goal))));
+  miniPills.forEach(p => p.addEventListener('click', () => openGoal(Number(p.dataset.goal))));
+  document.getElementById('btnGoalBack').addEventListener('click', () => {
+    goalInspector.classList.remove('open');
+    goalsGrid.style.display = 'grid';
+  });
+
+  // ---- P3 真实 RK4 物理沙盘 ----
+  const eOverM = 1.75882001076e11;
+  const Ra = 4.55e-3;
+  const rc = 37.5e-6;
+  const lnRatio = Math.log(Ra / rc);
+
+  let currentUa = 10;
+  let currentBmT = 2.40;
+
+  function calcBcMilliTesla(Ua) {
+    const geom = Ra * (1 - (rc / Ra) * (rc / Ra));
+    return Math.sqrt((8 * Ua) / (eOverM * geom * geom)) * 1000;
+  }
+
+  function traceElectron(Ua, BmT) {
+    const orbit=idealTrajectory({voltageV:Ua,fieldMT:BmT,anodeRadiusMm:4.55,filamentRadiusUm:37.5});
+    const pts=orbit.points.map(p=>({x:p.xMm/1000,y:p.yMm/1000}));
+    const turn=pts.at(-1),angle=2*Math.atan2(turn.y,turn.x);
+    if(orbit.outcome==='turning')for(const p of pts.slice(0,-1).reverse()){
+      const r=Math.hypot(p.x,p.y),a=angle-Math.atan2(p.y,p.x);pts.push({x:r*Math.cos(a),y:r*Math.sin(a)});
+    }
+    return {pts,points:pts,maxPos:turn,hitAnode:BmT<=calcBcMilliTesla(Ua)};
+  }
+
+  const canvas = document.getElementById('sandboxCanvas');
+  const ctx = canvas.getContext('2d');
+
+  function drawSandbox() {
+    const rect = canvas.parentElement.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const W = Math.max(200, Math.round(rect.width * dpr));
+    const H = Math.max(200, Math.round(rect.height * dpr));
+    if (canvas.width !== W || canvas.height !== H) { canvas.width = W; canvas.height = H; }
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const dw = rect.width || 300, dh = rect.height || 300;
+    const cx = dw / 2, cy = dh / 2, radPx = Math.min(dw, dh) * 0.40;
+    ctx.clearRect(0, 0, dw, dh);
+
+    // 淡同心参考圆
+    ctx.strokeStyle = 'rgba(130, 175, 210, 0.12)';
+    ctx.lineWidth = 1;
+    [0.35, 0.68].forEach(f => {
+      ctx.beginPath(); ctx.arc(cx, cy, radPx * f, 0, Math.PI * 2); ctx.stroke();
+    });
+
+    // 径向电场绿色虚线指引 E（从阳极向中心指向）
+    ctx.save();
+    ctx.strokeStyle = 'rgba(82, 183, 136, 0.28)';
+    ctx.fillStyle = 'rgba(82, 183, 136, 0.45)';
+    ctx.lineWidth = 1.1;
+    [Math.PI / 4, (3 * Math.PI) / 4, (5 * Math.PI) / 4, (7 * Math.PI) / 4].forEach(ang => {
+      const r1 = radPx * 0.90, r2 = radPx * 0.48;
+      const x1 = cx + Math.cos(ang) * r1, y1 = cy + Math.sin(ang) * r1;
+      const x2 = cx + Math.cos(ang) * r2, y2 = cy + Math.sin(ang) * r2;
+      ctx.setLineDash([4, 3]);
+      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+      ctx.setLineDash([]);
+      const ax = Math.cos(ang), ay = Math.sin(ang);
+      ctx.beginPath();
+      ctx.moveTo(x2, y2);
+      ctx.lineTo(x2 + ax * 6 - ay * 3.5, y2 + ay * 6 + ax * 3.5);
+      ctx.lineTo(x2 + ax * 6 + ay * 3.5, y2 + ay * 6 - ax * 3.5);
+      ctx.closePath(); ctx.fill();
+    });
+    ctx.restore();
+
+    // 磁场方向小点阵 ⊙
+    ctx.fillStyle = 'rgba(110, 181, 221, 0.34)';
+    for (let a = 0; a < 6; a++) {
+      const ang = (a * Math.PI) / 3;
+      const rx = cx + Math.cos(ang) * radPx * 0.56;
+      const ry = cy + Math.sin(ang) * radPx * 0.56;
+      ctx.beginPath(); ctx.arc(rx, ry, 5.2, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(110, 181, 221, 0.25)'; ctx.stroke();
+      ctx.beginPath(); ctx.arc(rx, ry, 1.4, 0, Math.PI * 2); ctx.fill();
+    }
+
+    // 阳极筒外环
+    ctx.beginPath();
+    ctx.arc(cx, cy, radPx, 0, Math.PI * 2);
+    ctx.strokeStyle = '#c49663';
+    ctx.lineWidth = 4;
+    ctx.stroke();
+
+    const Bc = calcBcMilliTesla(currentUa);
+    const nearBc = Math.abs(currentBmT - Bc) <= Bc * 0.032;
+    const tr = traceElectron(currentUa, currentBmT);
+
+    // 6 条对称次轨 + 1 条主高光轨迹
+    const rotAngles = [0, Math.PI/3, 2*Math.PI/3, Math.PI, 4*Math.PI/3, 5*Math.PI/3];
+    rotAngles.forEach((rot, idx) => {
+      const isMain = idx === 0;
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(rot - Math.PI / 2);
+      ctx.beginPath();
+      tr.pts.forEach((p, i) => {
+        const sx = (p.x / Ra) * radPx;
+        const sy = -(p.y / Ra) * radPx;
+        if (i === 0) ctx.moveTo(sx, sy); else ctx.lineTo(sx, sy);
+      });
+      ctx.strokeStyle = isMain
+        ? (tr.hitAnode ? '#f4b350' : '#58b4e3')
+        : (tr.hitAnode ? 'rgba(244, 179, 80, 0.26)' : 'rgba(88, 180, 227, 0.26)');
+      ctx.lineWidth = isMain ? 2.4 : 1.1;
+      ctx.stroke();
+      ctx.restore();
+    });
+
+    // 临界切点琥珀金光环
+    const badge = document.getElementById('bcBadge');
+    const atBc = Math.abs(currentBmT - Bc) < 1e-7;
+    badge.innerHTML = `${atBc ? '到达' : '接近'}临界磁场 <i>B</i><sub>c</sub>`;
+    if (nearBc) {
+      const ang = -Math.atan2(tr.maxPos.y, tr.maxPos.x) - Math.PI / 2;
+      const gx = cx + Math.cos(ang) * radPx;
+      const gy = cy + Math.sin(ang) * radPx;
+      const g = ctx.createRadialGradient(gx, gy, 2, gx, gy, 18);
+      g.addColorStop(0, 'rgba(255, 218, 128, 0.95)');
+      g.addColorStop(0.45, 'rgba(242, 180, 65, 0.55)');
+      g.addColorStop(1, 'rgba(242, 180, 65, 0)');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(gx, gy, 18, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(gx, gy, 5, 0, Math.PI * 2);
+      ctx.strokeStyle = '#ffd984'; ctx.lineWidth = 2; ctx.stroke();
+      badge.classList.add('visible');
+    } else {
+      badge.classList.remove('visible');
+    }
+
+    // 中心灯丝发光点
+    const fg = ctx.createRadialGradient(cx, cy, 1, cx, cy, 11);
+    fg.addColorStop(0, '#fff3cf');
+    fg.addColorStop(0.5, '#f4b350');
+    fg.addColorStop(1, 'rgba(244,179,80,0)');
+    ctx.fillStyle = fg;
+    ctx.beginPath(); ctx.arc(cx, cy, 11, 0, Math.PI * 2); ctx.fill();
+
+    // 更新数值显示
+    document.getElementById('roB').textContent = `${currentBmT.toFixed(2)} mT`;
+    document.getElementById('lblB').textContent = `${currentBmT.toFixed(2)} mT`;
+    document.getElementById('roBc').textContent = `${Bc.toFixed(2)} mT`;
+    document.getElementById('p4Ua').innerHTML = `<i>U</i><sub>a</sub> = ${currentUa} V`;
+    document.getElementById('p4Bc').innerHTML = `<i>B</i><sub>c</sub> = ${Bc.toFixed(2)} mT`;
+
+    const collected = tr.hitAnode;
+    const roRatio = document.getElementById('roRatio');
+    roRatio.textContent = collected ? '100%' : '0%';
+    roRatio.style.color = collected ? 'var(--field-e)' : '#8d959e';
+    document.getElementById('roState').textContent = atBc
+      ? '阳极内壁擦边'
+      : (collected ? '抵达阳极收集' : '磁偏转折返截止');
+  }
+
+  function drawStepPlot() {
+    const svg = document.getElementById('stepPlotSvg');
+    const Bc = calcBcMilliTesla(currentUa);
+    const maxB = 8.0;
+    const xOf = b => 26 + (b / maxB) * 172;
+    const bcX = xOf(Bc).toFixed(1);
+    const curX = xOf(currentBmT).toFixed(1);
+    const curY = currentBmT <= Bc ? 26 : 122;
+
+    svg.innerHTML = `
+      <line x1="26" y1="122" x2="202" y2="122" stroke="#3e4c5a" stroke-width="1.2"/>
+      <line x1="26" y1="14" x2="26" y2="122" stroke="#3e4c5a" stroke-width="1.2"/>
+      <line x1="26" y1="26" x2="31" y2="26" stroke="#3e4c5a" stroke-width="1"/>
+      <text x="4" y="29" font-size="9.5" fill="#47525e">100%</text>
+      <text x="14" y="125" font-size="9.5" fill="#47525e">0</text>
+      <line x1="${bcX}" y1="18" x2="${bcX}" y2="122" stroke="#d4882a" stroke-width="1" stroke-dasharray="3 3"/>
+      <text x="${Number(bcX) - 7}" y="135" font-size="10" fill="#b85d19" font-weight="700" font-family="Cambria Math,serif">B<tspan baseline-shift="sub" font-size="7">c</tspan></text>
+      <path d="M 26 26 L ${bcX} 26 L ${bcX} 122 L 198 122" fill="none" stroke="#1e5b7a" stroke-width="2.2"/>
+      <circle cx="${curX}" cy="${curY}" r="4.5" fill="#b85d19" stroke="#fff" stroke-width="1.5"/>
+      <text x="168" y="136" font-size="9.5" fill="#47525e">B / mT</text>
+    `;
+  }
+
+  document.getElementById('sliderB').addEventListener('input', e => {
+    currentBmT = Number(e.target.value);
+    const critical=calcBcMilliTesla(currentUa);
+    if(Math.abs(currentBmT-critical)<=.01)currentBmT=critical;
+    drawSandbox();
+    drawStepPlot();
+  });
+  document.querySelectorAll('.ua-pill').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.ua-pill').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentUa = Number(btn.dataset.ua);
+      drawSandbox();
+      drawStepPlot();
+    });
+  });
+
+  // ---- P6 直觉猜测单选 ----
+  let chosenGuess = null;
+  document.querySelectorAll('.guess-card').forEach(card => {
+    card.addEventListener('click', () => {
+      document.querySelectorAll('.guess-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      chosenGuess = card.dataset.guess;
+      document.getElementById('guessHintText').textContent = `已记录直觉猜测：选项 ${chosenGuess}（无对错之分）`;
+    });
+  });
+
+  const send = (type, payload={}) => parent.postMessage({source:'magnetron-manual',type,...payload}, location.origin);
+  const snapshot = () => ({bookPage:activeSpread*2,spread:activeSpread,bookVoltage:currentUa,bookField:currentBmT,guess:chosenGuess==null?null:Number(chosenGuess)-1,notes:{observation:notesStore.anomaly,explanation:notesStore.cause}});
+  const persist = () => send('state',{state:snapshot()});
+  document.addEventListener('click',()=>queueMicrotask(persist));
+  document.addEventListener('input',()=>queueMicrotask(persist));
+  document.getElementById('btnCloseTop').addEventListener('click',()=>send('close'));
+  document.getElementById('btnFinishManual').addEventListener('click',()=>{persist();send('finish');});
+  window.addEventListener('message',e=>{
+    if(e.source!==parent||e.origin!==location.origin||e.data?.source!=='magnetron-app')return;
+    if(e.data.type==='restore'){
+      const s=e.data.state;
+      if(!s.calibrationResult?.saved){calibrationResult=null;goalData[0].render=emptyCalibrationRender;document.querySelector('[data-goal="0"] .goal-ghost-preview').innerHTML=emptyCalibrationPreview;document.querySelector('[data-goal="0"] .tag').textContent='待采图';document.querySelector('[data-goal="0"] .goal-card-head span:last-child').textContent='点击展开空坐标 ↗';}
+      if(s.calibrationResult?.saved){
+       calibrationResult=s.calibrationResult;
+       const f=calibrationResult,y=b=>139-(b+.7)/7.2*115,x=i=>43+i/1.44*280,minus=v=>v.toFixed(3).replace('-', '−');
+       const points=f.rows.map(([i,b])=>`<circle cx="${x(i)}" cy="${y(b)}" r="3.5" fill="#1e5b7a"/>`).join('');
+       const chart=`<svg viewBox="0 0 360 175" width="100%"><path d="M43 20V139H333" fill="none" stroke="#586474"/><path d="M43 ${y(0)}H333" stroke="#9fa9ad" stroke-dasharray="3 3"/><text x="31" y="${y(0)+4}" text-anchor="end" font-size="12">0</text><path d="M43 ${y(f.intercept)}L${x(.2)} ${y(.2*f.slope+f.intercept)}" stroke="#b47c3d" stroke-width="2" stroke-dasharray="4 3"/><path d="M${x(.2)} ${y(.2*f.slope+f.intercept)}L${x(1.4)} ${y(1.4*f.slope+f.intercept)}" stroke="#b47c3d" stroke-width="2"/>${points}<circle cx="43" cy="${y(f.intercept)}" r="3.8" fill="#b47c3d"/><path d="M47 ${y(f.intercept)}L70 151H90" fill="none" stroke="#b47c3d"/><text x="94" y="155" font-size="12" fill="#8d582a">(0, ${minus(f.intercept)} mT)</text><text x="4" y="16" font-size="12">B / mT</text><text x="290" y="170" font-size="12">I<tspan baseline-shift="sub" font-size="9">M</tspan> / A</text></svg>`;
+       goalData[0].render=()=>`<div style="padding:16px;height:100%;display:flex;flex-direction:column;justify-content:center">${chart}<p style="text-align:center;font-family:Consolas">B = ${f.slope.toFixed(3)} I<sub>M</sub> − ${Math.abs(f.intercept).toFixed(3)} mT</p><p style="text-align:center">k = ${f.slope.toFixed(3)} mT/A　 B<sub>0</sub> = ${minus(f.intercept)} mT</p></div>`;
+       document.querySelector('[data-goal="0"] .goal-ghost-preview').innerHTML=chart;
+       document.querySelector('[data-goal="0"] .tag').textContent='已标定';
+       document.querySelector('[data-goal="0"] .goal-card-head span:last-child').textContent='查看标定结果 ↗';
+      }
+
+      currentUa=s.bookVoltage??10;currentBmT=s.bookField??2.4;
+      chosenGuess=s.guess==null?null:String(s.guess+1);
+      notesStore.anomaly=s.notes?.observation??'';notesStore.cause=s.notes?.explanation??'';
+      chapter3Results.restore(s.chapter3Result);
+      researchBook.restore(s);
+      document.getElementById('sliderB').value=currentBmT;
+      document.querySelectorAll('.ua-pill').forEach(b=>b.classList.toggle('active',Number(b.dataset.ua)===currentUa));
+      document.querySelectorAll('.guess-card').forEach(c=>c.classList.toggle('selected',c.dataset.guess===chosenGuess));
+      document.getElementById('guessHintText').textContent=chosenGuess?`已记录直觉猜测：选项 ${chosenGuess}`:'选择最接近你预期的一条曲线';
+      document.getElementById('btnFinishManual').disabled=chosenGuess==null;
+      goalInspector.classList.remove('open');goalsGrid.style.display='grid';
+      thermCard.classList.remove('open');
+      goSpread(Math.floor((s.bookPage??0)/2));drawSandbox();drawStepPlot();
+    }
+    if(e.data.type==='close-animation'){
+      persist();
+      const shell=document.getElementById('bookShell'),r=shell.getBoundingClientRect(),target=e.data.target;
+      const animation=document.querySelector('.book-stage').animate([
+        {transform:'translate(0,0) scale(1)',opacity:1},
+        {transform:`translate(${target.x-(r.x+r.width/2)}px,${target.y-(r.y+r.height/2)}px) scale(.06)`,opacity:0}
+      ],{duration:matchMedia('(prefers-reduced-motion:reduce)').matches?80:540,easing:'cubic-bezier(.55,.05,.7,.45)',fill:'forwards'});
+      animation.finished.then(()=>send('closed'));
+    }
+    if(e.data.type==='open-animation'){
+      const stage=document.querySelector('.book-stage');stage.getAnimations().forEach(a=>a.cancel());
+      stage.animate([{opacity:0,transform:'translateY(25px) scale(.96)'},{opacity:1,transform:'none'}],{duration:matchMedia('(prefers-reduced-motion:reduce)').matches?80:320,easing:'ease-out'});
+    }
+  });
+  document.querySelectorAll('.guess-card').forEach(c=>c.addEventListener('click',()=>document.getElementById('btnFinishManual').disabled=false));
+  document.getElementById('btnFinishManual').disabled=true;
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape'){e.preventDefault();if(thermCard.classList.contains('open'))thermCard.classList.remove('open');else send('close');}
+    if(e.key==='Tab'){
+      const items=[...document.querySelectorAll('button:not(:disabled),input,textarea')].filter(x=>x.getClientRects().length);
+      const first=items[0],last=items.at(-1);
+      if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+      else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
+    }
+  });
+  send('ready');
+  window.addEventListener('resize', () => { if (activeSpread === 1) drawSandbox(); });
+
+  // 初始绘制
+  drawSandbox();
+  drawStepPlot();
+})();
+</script>
+</body>
+</html>

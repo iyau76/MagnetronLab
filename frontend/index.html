@@ -1,0 +1,22 @@
+﻿<!doctype html>
+<html data-surface="bench" lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#242c30"><title>磁截止实验室</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23142634'/%3E%3Ccircle cx='16' cy='16' r='10' fill='none' stroke='%23d5ae70' stroke-width='2'/%3E%3Cpath d='M16 16Q25 9 23 21' fill='none' stroke='%2387cef0' stroke-width='2'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="chapter1/chapter.css"><link rel="stylesheet" href="chapter1/diagrams.css"><link rel="stylesheet" href="chapter1/book.css"><link rel="stylesheet" href="chapter1/scene-labels.css">
+<script type="importmap">{"imports":{"three":"./node_modules/three/build/three.module.js","three/addons/":"./node_modules/three/examples/jsm/"}}</script>
+<link rel="stylesheet" href="compact.css"><script defer src="compact.js"></script></head>
+<body><noscript>请在浏览器中启用 JavaScript，以打开三维实验台。</noscript>
+<main id="scene" aria-label="三维实验台"></main><div id="vignette"></div>
+<section id="launcher" aria-label="实验入口"><div class="launcher-heading"><h1 data-title="磁截止实验室">磁截止实验室</h1><p>真空二极管 · 电子运动与收集</p></div><div class="launcher-actions"><button id="new-experiment" class="launch-primary" data-action="new">开始教学实验 <span>→</span></button><button data-action="open-sandbox">自由探索沙盘</button><button id="continue-experiment" disabled data-action="continue">继续实验</button><small id="save-hint"></small><button data-action="settings">设置</button><button data-action="exit">退出</button></div><footer><span>实验预习 / 装置认识 / 磁场标定</span><small id="preload-status">正在打开实验室</small></footer></section>
+<script>
+  const entry = document.getElementById('launcher');
+  entry.addEventListener('click', event => {
+    const button = event.target.closest('button[data-action]');
+    if (!button || entry.dataset.ready) return;
+    entry.dataset.pending = button.dataset.action;
+    document.getElementById('preload-status').textContent = '正在打开…';
+  });
+</script>
+<script type="module" src="chapter1/main.js" onerror="document.getElementById('preload-status').innerHTML='加载失败，&lt;a href=&quot;./&quot;&gt;重新打开&lt;/a&gt;'"></script></body></html>

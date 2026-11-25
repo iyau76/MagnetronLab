@@ -1,0 +1,20 @@
+<!doctype html><html data-surface="research" lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>磁截止实验室 · 微观探究</title><link rel="stylesheet" href="studio.css"><link rel="stylesheet" href="../compact.css"><script defer src="../compact.js"></script><style>.touch-help{display:none}@media(pointer:coarse){.mouse-help{display:none}.touch-help{display:inline}}</style></head><body class="has-right guided" data-layout="scene">
+<header id="top">
+  <div class="hud-left"><button id="menu" class="icon-btn" aria-label="实验菜单">☰</button>
+    <div class="crumbs"><div class="crumb-line"><span>01 装置</span><i>›</i><span>02 标定</span><i>›</i><span>03 磁截止</span><i>›</i><strong id="chapter-title">04 零倾角消融与微观破案</strong></div>
+      <div class="crumb-sub"><span id="phase"></span></div><div id="story-progress" aria-label="本章进度"></div></div></div>
+  <div id="task-hint" aria-live="polite"></div>
+  <div class="hud-right top-actions"><button id="free-review" class="quiet-btn" hidden>自由复核</button>
+    <div class="view-switch"><button id="view-bench">实验台</button><button id="view-tube">管内</button><button id="view-near" hidden>近壁放大</button></div>
+    <button id="reset" class="icon-btn" aria-label="复位视角">↻</button></div>
+</header>
+<main id="workspace">
+  <section id="stage"><div id="viewport" aria-label="三维实验场景"></div><div id="stage-caption"></div><div id="scene-readout"></div><div class="scene-instruction"><span class="mouse-help">拖动旋转 · 右键平移 · 滚轮缩放</span><span class="touch-help">单指旋转 · 双指缩放或平移</span></div></section>
+  <aside id="left-panel" hidden aria-label="实验参数"></aside>
+  <aside id="analysis" aria-label="图谱与分析"><div class="analysis-heading"><h1 id="chart-title"></h1><span id="voltage-badge"></span><button id="analysis-close" class="close-btn" aria-label="收起图谱">×</button></div><div id="chart"></div><div id="legend"></div><section id="controls"></section></aside>
+</main>
+<div id="clues" hidden></div>
+<footer id="conversation" aria-label="实验引导"><div id="dialogue" aria-live="polite"></div><div class="dialog-actions"><button id="previous" class="quiet-btn">← 上一步</button><span id="dialog-wait"></span><span id="dialog-page"></span><button id="next" class="primary">继续 →</button></div></footer>
+<nav id="dock" aria-label="实验工具"><button id="dock-book">📖 <span>实验手账</span></button><button id="dock-analysis" class="active">📈 <span>图谱与分析</span></button><button id="dock-clues">🧭 <span>线索看板</span></button></nav>
+<div id="notice" role="status" hidden></div><dialog id="detail"><button id="detail-close" class="close-btn" aria-label="关闭">×</button><div id="detail-body"></div></dialog>
+<script type="module" src="studio.js"></script></body></html>

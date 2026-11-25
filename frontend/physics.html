@@ -1,0 +1,29 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>方程与数值方法 · 磁截止实验室</title><style>body{font:16px/1.85 system-ui,"Microsoft YaHei",sans-serif;color:#193b36;background:#f7f8f4;max-width:960px;margin:40px auto;padding:0 24px}h1,h2,h3{line-height:1.4}h2{margin-top:36px}a{color:#147e79}table{border-collapse:collapse;width:100%;background:#fff}th,td{border:1px solid #d7e1db;padding:10px;text-align:left}.eq{padding:16px 20px;background:#eaf1eb;border-left:3px solid #147e79;overflow-x:auto;font:18px/1.8 Cambria,"Times New Roman",serif}.scroll{overflow-x:auto}code{background:#e8eee7;padding:2px 5px}</style></head><body>
+<a href="./index.html#about">← 返回磁截止实验室</a><h1>方程、采样与数值方法</h1><p>以下内容对应教学模型和当前独立电子研究模型。所有公式使用 SI 单位计算；界面把长度、磁场与电流换成 mm、μm、mT 和 μA 显示。</p>
+<h2>1. 先明确几何与电压</h2><p>圆柱坐标的 z 轴沿灯丝，r 是到灯丝轴的距离。灯丝半径为 r<sub>f</sub>，阳极内半径为 r<sub>a</sub>，有效长度为 L，中央阳极长度为 L<sub>c</sub>。H 端位于 z=−L/2，K 端位于 z=L/2。</p>
+<p>U<sub>a</sub> 是阳极相对 H 端的加速电压，U<sub>f</sub> 是 K 相对 H 的灯丝压降。e 表示电子电荷量的正值，电子带电 −e；m<sub>e</sub> 是电子质量，k<sub>B</sub> 是玻尔兹曼常数。</p>
+<h2>2. 基础理想模型</h2><p>阴极等电势、无限长同轴结构、均匀轴向磁场、电子零初速，不计电子之间的相互作用。教学页的 U 是阳极相对整个等电势阴极的电压。</p>
+<div class="eq">φ(r) = U ln(r/r<sub>f</sub>) / ln(r<sub>a</sub>/r<sub>f</sub>)<br>E<sub>r</sub> = −U / [r ln(r<sub>a</sub>/r<sub>f</sub>)]<br>m<sub>e</sub> dv/dt = −e(E + v × B)</div>
+<p>电子从 r=r<sub>f</sub>、v=0 发射。能量守恒与轴向对称性给出：</p>
+<div class="eq">½m<sub>e</sub>(v<sub>r</sub>²+v<sub>θ</sub>²) = eφ(r)<br>m<sub>e</sub>r v<sub>θ</sub> − eBr²/2 = −eBr<sub>f</sub>²/2<br>v<sub>θ</sub>(r) = eB(r²−r<sub>f</sub>²)/(2m<sub>e</sub>r)</div>
+<p>在临界磁场，电子恰好在阳极处达到径向转向点：r=r<sub>a</sub>、v<sub>r</sub>=0。于是：</p>
+<div class="eq">B<sub>c</sub> = √(8m<sub>e</sub>U/e) · r<sub>a</sub>/(r<sub>a</sub>²−r<sub>f</sub>²)<br>e/m<sub>e</sub> = 8U r<sub>a</sub>² / [B<sub>c</sub>²(r<sub>a</sub>²−r<sub>f</sub>²)²]</div>
+<p>在 U>0 的这个理想模型中，|B|≤B<sub>c</sub> 时收集全部发射电流，|B|&gt;B<sub>c</sub> 时不收集。教学界面以相邻测量点夹住截止；点间连线不是额外的物理展宽。</p>
+<p>轨迹由对应电场的四阶 Runge–Kutta 积分得到。高于截止时展示到第一次径向转向，方便看清“未到达阳极”；转向点不等于已经返回阴极。数值验收包括能量、角动量、零场飞行时间和独立转向半径计算。</p>
+<h2>3. 研究模型的电势与磁场</h2><p>灯丝电势沿长度线性增加，三段外电极同电势：</p>
+<div class="eq">φ<sub>f</sub>(z) = U<sub>f</sub>(z/L + ½)<br>φ(r,z) = φ<sub>f</sub>(z) + [U<sub>a</sub>−φ<sub>f</sub>(z)] ln(r/r<sub>f</sub>)/ln(r<sub>a</sub>/r<sub>f</sub>)<br>E<sub>r</sub> = −[U<sub>a</sub>−φ<sub>f</sub>(z)]/[r ln(r<sub>a</sub>/r<sub>f</sub>)]<br>E<sub>z</sub> = −(U<sub>f</sub>/L)[1−ln(r/r<sub>f</sub>)/ln(r<sub>a</sub>/r<sub>f</sub>)]<br>B = (B sinα, 0, B cosα)</div>
+<p>α 是磁场与管轴的夹角。电势在截断圆柱域中满足拉普拉斯方程；端面取上述解析电势，未求解真实有限电极的端部场。磁场在空间中均匀，倾斜与非均匀是不同的假设。</p>
+<p>“去掉灯丝梯度”把整根阴极保持在原来的平均电势 U<sub>f</sub>/2，而不是把它改为 0 V。这样 E<sub>z</sub>=0，径向加速电压为 U<sub>a</sub>−U<sub>f</sub>/2，平均加速条件保持相同。该对照仍有热初速和轴向截断边界。</p>
+<h2>4. 热发射初态</h2><p>发射位置沿灯丝均匀，周向角均匀。径向向外速度使用穿过表面的通量分布，切向与轴向速度分别使用正态分布：</p>
+<div class="eq">z ∼ Uniform(−L/2, L/2)，θ ∼ Uniform(0,2π)<br>f(v<sub>r</sub>) = [m<sub>e</sub>/(k<sub>B</sub>T)] v<sub>r</sub> exp[−m<sub>e</sub>v<sub>r</sub>²/(2k<sub>B</sub>T)]，v<sub>r</sub>&gt;0<br>v<sub>θ</sub> ∼ Normal(0,k<sub>B</sub>T/m<sub>e</sub>)<br>v<sub>z</sub> ∼ Normal(0,k<sub>B</sub>T/m<sub>e</sub>)</div>
+<p>Normal 的第二个参数是方差。软件用五维扰乱 Sobol 采样，种子为 20260910；1024、4096、8192、32768 个粒子使用同一序列的前缀。提高粒子数时保留已有初态，有助于对照小变化。当前没有从温度自动推算发射源强；温度控制初速分布，源强是独立输入。</p>
+<h2>5. 从命中位置得到两路电流</h2><p>零倾角时，先由初始能量和正则角动量筛出能够证明到不了任何收集电极的电子，记为“无收集贡献”。其余电子积分到首次边界或时间上限，分别记为返回灯丝、撞击中央、撞击保护环、从轴向离开、仍在飞行。六类共同覆盖全部样本。</p>
+<div class="eq">中央命中：r=r<sub>a</sub> 且 |z|≤L<sub>c</sub>/2<br>保护环命中：r=r<sub>a</sub> 且 L<sub>c</sub>/2&lt;|z|≤L/2<br>I<sub>A1</sub> = I<sub>发射</sub> N<sub>中央</sub>/N<br>I<sub>A2</sub> = I<sub>发射</sub> N<sub>两保护环</sub>/N<br>I<sub>总收集</sub> = I<sub>A1</sub> + I<sub>A2</sub></div>
+<p>上式对应均匀发射；选择端部冷却时，以各粒子的归一化发射权重代替计数。初态筛出的电子仍保留在总发射权重中，对三段收集电流的贡献为零。穿过 z=±L/2 的粒子记为轴向离开。总收集电流可能小于发射电流。三段电极同电势，所以改变中央划分长度只需按已有命中位置重新分类；加入电极电势差后需重新计算场和轨迹。</p>
+<h2>6. 参数依据与数值尺度</h2><div class="scroll"><table><tr><th>量</th><th>默认值</th><th>依据或用途</th></tr><tr><td>阳极半径 r<sub>a</sub></td><td>4.55 mm</td><td>实验说明</td></tr><tr><td>灯丝半径 / 有效长度 / 中央长度</td><td>37.5 μm / 35 mm / 15 mm</td><td>灯丝直径来自参数卡；三段收集域为中央 15 mm、两端各 10 mm。实际热发射长度另需核实</td></tr><tr><td>温度 / 灯丝压降</td><td>2000 K / 3.428 V</td><td>温度为说明约数；压降为早期代表读数，补充实验约3.68 V</td></tr><tr><td>加速电压 / 磁场</td><td>10 V / 4 mT</td><td>探索起始条件</td></tr><tr><td>总发射电流 / 粒子数</td><td>30 μA / 4096</td><td>输入幅值与计算分辨率</td></tr><tr><td>积分方法 / 最大飞行时间</td><td>Dormand–Prince 5(4) / 2000 ns</td><td>双精度自适应积分，轴对称统计采用子午面约化，倾斜场采用三维积分</td></tr></table></div>
+<p>C++17 原生内核按局部截断误差选择步长，以 DOPRI 四次连续插值定位首次边界，并检查同一步内触壁后折返的事件。零倾角有灯丝梯度、且磁场小于平均电压冷截止场的一半时，采用对数半径与 Sundman 时间变换，其余零倾角统计采用四维约化方程，倾斜场采用六维三维空间方程。</p>
+<p>默认统计档的相对容差为零倾角 10⁻⁶、倾角 10⁻⁷；零倾角疑似擦丝轨迹以 10⁻⁹ 重算。精细复核档及展示轨迹使用 10⁻⁹。这些数值控制局部积分误差，电流误差还取决于边界分类与样本数。未被初态判据排除的电子积分到真实边界或 2 μs；到时仍在域内单独记为仍在飞行。屏幕展示同批初态中的 48 条完整积分轨迹，相同统计粒子数时展示编号固定，改变粒子数会重新均匀选择编号。</p>
+<h2>7. 实测比较与当前结论</h2><p>真实数据使用主标定 B(mT)=4.230907195 I(A)−0.188066736，测量区间为0.2–1.4 A。零励磁处的负外推值不能直接视为已知背景磁场；从该点进入只允许非负场强的研究界面时从0 mT开始，原始读数仍保留在实测记录中。</p>
+<p>模型可产生中央隆起和中央/保护环之间的重新分配。倾斜磁场还可使电子经历多次回环后延迟收集，形成高场尾部；与实验作定量比较仍需实际安装角度、热发射分布与局部磁场的独立标定。实测比较保留实际电压、两路电流和原记录身份，发射源强不自动拟合。真实零场两保护环合计约为中央的0.81倍，并非微小修正。</p>
+<p>真实数据区的比荷活动采用中央通道、各电压自己选取的截止判据，以及细灯丝长同轴近似；四电压拟合允许截距。截止判据、磁场截距与几何改变会影响计算值。模型已知 e/m 的正向计算，不作为新的独立 e/m 测量。</p>
+<p><a href="./usage.html">允许的参数范围与运行说明</a> · <a href="./licenses.html">来源、许可与 AI 辅助</a></p></body></html>

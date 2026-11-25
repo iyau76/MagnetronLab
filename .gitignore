@@ -1,0 +1,29 @@
+# Python bytecode and virtual environments
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+.portable-build-env/
+
+# Build and packaging artifacts (publish via GitHub Releases)
+/build/
+/dist/
+*.spec
+
+# Local runtime caches and test outputs
+results/*
+!results/README.md
+*.log
+
+# Node dependencies (keep the minimal vendored Three.js ES modules)
+node_modules/
+!frontend/node_modules/
+frontend/node_modules/*
+!frontend/node_modules/three/
+
+# OS and IDE files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html data-surface="calibration" lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>磁截止实验室 · 磁场标定</title>
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#07121d;
+  --hud:#101d29;
+  --panel:#122130;
+  --card:#162838;
+  --card-deep:#0f1d29;
+  --line:#2e4254;
+  --line-soft:#233444;
+  --ink:#e6edf4;
+  --muted:#95a9b9;
+  --accent:#d6ac73;
+  --cyan:#75b6e6;
+  --teal:#85d5c1;
+  --warn:#eab364;
+  --header-h:66px;
+  --left-w:0px;
+  --right-w:0px;
+  font-family:"Microsoft YaHei","Noto Sans SC",system-ui,sans-serif;
+  font-size:14px;
+}
+body.has-left{--left-w:368px}
+body.has-right{--right-w:436px}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink)}
+button,input{font:inherit;color:inherit}
+button{background:transparent;border:1px solid var(--line);border-radius:4px;cursor:pointer;transition:background .15s,border-color .15s,opacity .15s,transform .15s}
+button:hover:not(:disabled){background:#ffffff0b;border-color:#72899d}
+button:disabled{opacity:.36;cursor:not-allowed}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+[hidden]{display:none!important}
+.mono{font-family:"Consolas","JetBrains Mono",monospace;font-variant-numeric:tabular-nums}
+
+/* Top HUD */
+#hud{
+  position:fixed;inset:0 0 auto 0;height:var(--header-h);z-index:30;
+  display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:14px;
+  padding:0 18px;background:var(--hud);border-bottom:1px solid #2b3c4b;
+}
+.hud-left{display:flex;align-items:center;gap:12px;min-width:0}
+.icon-btn{width:38px;height:38px;padding:0;font-size:20px;display:grid;place-items:center;border-color:#364a5b;color:#c9d7e3}
+.crumbs{display:flex;flex-direction:column;gap:2px;min-width:0}
+.crumb-line{display:flex;align-items:center;gap:6px;font-size:15px;font-weight:600;white-space:nowrap}
+.crumb-back{
+  border:0;padding:2px 6px;margin:-2px -6px;border-radius:4px;color:#9eb7cb;font-weight:500;font-size:14px;
+}
+.crumb-back:hover{background:#ffffff10;color:var(--ink)}
+.crumb-sep{color:#5e7487;font-weight:400}
+.crumb-cur{color:#f3ead5}
+.crumb-sub{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+#task-hint{
+  justify-self:center;max-width:650px;width:100%;
+  padding:7px 14px;border-radius:6px;border:1px solid #45657b;background:#163246;
+  color:#dceaf2;font-size:12.5px;line-height:1.42;text-align:center;
+  transition:border-color .25s,background .25s,color .25s;
+}
+#task-hint.is-warn{border-color:#b68846;background:#2f2414;color:#f6deb3}
+#task-hint.is-done{border-color:#4d8b7b;background:#122e2b;color:#bdece0}
+
+.hud-right{display:flex;align-items:center;gap:8px}
+.view-switch{display:inline-flex;border:1px solid #35495a;border-radius:5px;overflow:hidden;background:#0c1722}
+.view-switch button{border:0;border-radius:0;padding:6px 12px;font-size:13px;white-space:nowrap}
+.view-switch button.active{background:#b8955a30;color:#f2d6a8;box-shadow:inset 0 -2px 0 var(--accent)}
+.view-switch button:disabled{opacity:.38;background:transparent;color:#7e909f}
+.reset-cam{width:34px;height:34px;padding:0;font-size:16px;display:grid;place-items:center}
+
+/* Real Independent Center Scene Viewport */
+#scene{
+  position:fixed;
+  top:var(--header-h);bottom:0;left:var(--left-w);right:var(--right-w);
+  background:radial-gradient(ellipse at 50% 42%,#1c2e3b 0%,#0b1622 68%,#071019 100%);
+  overflow:hidden;transition:left .22s ease,right .22s ease;
+}
+.scene-badge{
+  position:absolute;left:16px;bottom:6px;font-size:11px;color:#8fa3b4;pointer-events:none;
+}
+/* Bottom Dock centered strictly inside #scene corridor */
+#dock{
+  position:absolute;left:50%;bottom:26px;transform:translateX(-50%);z-index:12;
+  display:flex;gap:5px;padding:5px;border-radius:8px;
+  background:#112232eb;border:1px solid #48607388;box-shadow:0 8px 26px #0007;
+  white-space:nowrap;max-width:calc(100% - 16px);
+}
+#dock button{
+  display:flex;align-items:center;gap:6px;padding:8px 13px;border-color:transparent;border-radius:5px;
+  font-size:13px;color:#cddae5;position:relative;
+}
+#dock button .ico{font-size:17px;line-height:1}
+#dock button.active{background:#345066;border-color:#6e8ea3;color:#fff}
+#dock button.suggested{border-color:#c5a06a;animation:breathe 2.4s ease-in-out infinite}
+#dock button.pulse-save{animation:saveHit .85s ease}
+@keyframes breathe{50%{box-shadow:0 0 14px #d6ac7340;background:#b8955a26}}
+@keyframes saveHit{0%{transform:scale(1)}40%{transform:scale(1.12);background:#5b8a7840;border-color:var(--teal)}100%{transform:scale(1)}}
+
+/* Left & Right Drawers (Full height below HUD) */
+.drawer{
+  position:fixed;top:var(--header-h);bottom:0;z-index:20;
+  background:var(--panel);display:flex;flex-direction:column;min-height:0;
+}
+#left-drawer{left:0;width:var(--left-w);border-right:1px solid var(--line)}
+#right-drawer{right:0;width:var(--right-w);border-left:1px solid var(--line)}
+.drawer[hidden]{display:none}
+.drawer-head{
+  flex:none;display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:11px 15px 9px;border-bottom:1px solid var(--line-soft);
+}
+.drawer-head h2{margin:0;font-size:15.5px;font-weight:600;letter-spacing:.03em;color:#f3ead5;display:flex;align-items:center;gap:7px;min-width:0}
+.drawer-head .tag{font-size:11px;font-weight:500;color:var(--accent);padding:2px 6px;border:1px solid #6b573b;border-radius:4px;background:#d6ac7314;white-space:nowrap}
+.close-btn{width:28px;height:28px;padding:0;border:0;font-size:20px;color:#9eb2c2;display:grid;place-items:center;flex:none}
+.close-btn:hover{background:#ffffff10;color:#fff}
+.drawer-body{flex:1;min-height:0;overflow-y:auto;padding:9px 14px 11px;display:flex;flex-direction:column;gap:8px}
+.drawer-body > *{flex:none}
+.drawer-body::-webkit-scrollbar{width:6px}
+.drawer-body::-webkit-scrollbar-thumb{background:#34495c;border-radius:3px}
+.drawer-foot{flex:none;padding:10px 14px 12px;border-top:1px solid var(--line-soft);background:#0f1d2a;display:flex;flex-direction:column;gap:6px}
+
+/* Cards & Controls inside Drawers */
+.block{background:var(--card);border:1px solid var(--line);border-radius:7px;padding:10px 11px}
+.block-title{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:3px 8px;font-size:13px;font-weight:600;color:#dce6ef;margin-bottom:7px}
+.block-title small{font-weight:400;color:var(--muted);font-size:11px;line-height:1.35}
+
+/* 2.1 Circuit SVG + Radio Matrix */
+.svg-frame{background:var(--card-deep);border:1px solid #26394a;border-radius:6px;padding:7px 7px 5px}
+.svg-caption{font-size:11px;color:var(--muted);text-align:center;margin-top:3px;line-height:1.35}
+.wire-modes{display:grid;gap:4px}
+.wire-opt{
+  display:flex;align-items:flex-start;gap:8px;padding:6px 9px;border-radius:6px;
+  border:1px solid #2d4052;background:#132331;cursor:pointer;text-align:left;width:100%;
+}
+.wire-opt:hover{border-color:#5f7990;background:#182b3c}
+.wire-opt.is-selected{border-color:var(--accent);background:#b8955a1c}
+.wire-dot{
+  width:13px;height:13px;border-radius:50%;border:2px solid #6b8093;margin-top:2px;flex:none;
+  display:grid;place-items:center;
+}
+.wire-opt.is-selected .wire-dot{border-color:var(--accent)}
+.wire-opt.is-selected .wire-dot::after{content:'';width:5px;height:5px;border-radius:50%;background:var(--accent)}
+.wire-opt strong{display:block;font-size:12.5px;color:#edf3f8;margin-bottom:1px}
+.wire-opt small{display:block;font-size:11px;color:var(--muted);line-height:1.35}
+.wire-opt .seen{margin-left:auto;font-size:11px;color:var(--teal);opacity:.9;flex:none}
+.verdict-box{
+  padding:7px 9px;border-left:2px solid var(--cyan);background:#75b6e610;border-radius:0 5px 5px 0;
+  font-size:11.5px;line-height:1.45;color:#d6e6f2;
+}
+.spacing-box{padding:8px 10px}
+.spacing-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:12.5px;font-weight:600;color:#dce6ef;margin-bottom:2px}
+.spacing-val{font-size:12px;font-weight:600;color:var(--accent)}
+.spacing-track-wrap{position:relative;padding:2px 0}
+.spacing-notch{
+  position:absolute;left:calc(8px + (100% - 16px) * 0.3846);top:3px;bottom:3px;width:2px;
+  transform:translateX(-50%);background:var(--accent);border-radius:1px;pointer-events:none;opacity:.88;
+}
+.spacing-scale{
+  position:relative;display:flex;justify-content:space-between;align-items:center;
+  margin-top:2px;font-size:10.5px;color:#8fa3b4;min-height:19px;
+}
+.snap-tag{
+  position:absolute;left:38.46%;transform:translateX(-50%);
+  padding:1px 6px;border-radius:3px;font-size:10.5px;border:1px solid #536678;background:#152534;color:#bfd1df;white-space:nowrap;
+}
+.snap-tag.is-snapped{border-color:#9e7d4e;background:#d6ac7322;color:#f3d298;font-weight:600}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.switch{position:relative;display:inline-flex;align-items:center;gap:7px;cursor:pointer;font-size:12.5px;white-space:nowrap}
+.switch input{position:absolute;opacity:0;width:34px;height:18px;margin:0}
+.switch-ui{width:34px;height:18px;border-radius:11px;background:#314353;border:1px solid #5f7588;position:relative;transition:.16s;flex:none}
+.switch-ui::after{content:'';position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#a8bac7;transition:.16s}
+.switch input:checked+.switch-ui{background:#8f6d3f;border-color:var(--accent)}
+.switch input:checked+.switch-ui::after{transform:translateX(16px);background:#fff0d4}
+
+/* 2.2 Discrete CH1 Slider & Tesla Meter Control */
+.ch1-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.ch1-val{font-size:20px;font-weight:600;color:var(--accent)}
+.range-discrete{width:100%;margin:2px 0;accent-color:var(--accent);cursor:pointer;height:18px}
+.detents{display:flex;justify-content:space-between;gap:1px;margin-top:2px}
+.detents button{
+  border:0;padding:2px 3px;font-size:10.5px;color:#8ea2b3;border-radius:3px;
+}
+.detents button:hover{color:#fff;background:#ffffff10}
+.detents button.is-cur{color:#111d29;background:var(--accent);font-weight:700}
+.detents button.is-done{text-decoration:underline;text-decoration-color:var(--teal);text-underline-offset:3px}
+.ch1-sub{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:5px;font-size:11px;color:var(--muted)}
+.mini-link{border:0;padding:3px 7px;font-size:11px;color:#a8c6dc;background:#ffffff0c;border-radius:3px;white-space:nowrap;flex:none}
+.mini-link:hover{background:#ffffff18;color:#fff}
+
+/* Physical Fig 4(d)-inspired LCD readout & controls */
+.meter-card{display:flex;flex-direction:column;gap:8px}
+.meter-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.pill-btn{padding:5px 7px;font-size:12px;border-radius:5px;background:#11202e;display:flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap}
+.pill-btn.is-on{border-color:#4b9385;background:#193937;color:#bdece1}
+.pill-btn.is-uncapped{border-color:var(--cyan);background:#1b384e;color:#d6ecfb}
+.lcd-box{
+  position:relative;padding:8px 11px 7px;border-radius:6px;
+  background:linear-gradient(180deg,#0b232a 0%,#0f2930 100%);
+  border:1px solid #35606b;box-shadow:inset 0 2px 8px #0006;
+  display:flex;align-items:baseline;justify-content:space-between;min-height:48px;
+}
+.lcd-pol{
+  font-size:12px;font-weight:700;padding:1px 6px;border-radius:3px;
+  background:#85d5c122;color:var(--teal);border:1px solid #85d5c155;align-self:flex-start;
+}
+.lcd-num{font-size:27px;letter-spacing:.03em;color:#a9ece0;line-height:1}
+.lcd-num.is-off{color:#35565a}
+.lcd-unit{font-size:12.5px;color:#7cbdb0;margin-left:4px}
+.lcd-sub{font-size:11px;color:#89b8b0;display:flex;justify-content:space-between;margin-top:-3px}
+
+/* 5-hole acrylic plate tactile mini-map */
+.plate-map{
+  position:relative;background:#0e1b26;border:1px solid #2b4254;border-radius:6px;padding:8px 9px 7px;
+}
+.plate-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:6px;max-width:255px;margin:5px auto 1px;position:relative;
+}
+.hole-btn{
+  padding:5px 7px;border-radius:5px;background:#152838;border:1px solid #365066;
+  font-size:11.5px;display:flex;align-items:center;justify-content:space-between;gap:5px;white-space:nowrap;
+}
+.hole-btn.center-hole{grid-column:1 / -1;justify-self:center;width:58%}
+.hole-btn.is-active{border-color:var(--accent);background:#b8955a26;color:#ffe5b5}
+.hole-btn.is-measured{border-color:#4b8f7f}
+.hole-badge{width:7px;height:7px;border-radius:50%;background:#40586b;flex:none}
+.hole-btn.is-measured .hole-badge{background:var(--teal)}
+.hole-btn.is-active .hole-badge{background:var(--accent);box-shadow:0 0 8px var(--accent)}
+
+.hint-strip{
+  padding:7px 9px;border-left:2px solid var(--teal);background:#85d5c10f;border-radius:0 5px 5px 0;
+  font-size:11.5px;line-height:1.48;color:#cde4df;
+}
+.hint-strip.is-warn{border-left-color:var(--warn);background:#eab36414;color:#f5deb4}
+
+/* Buttons */
+.primary-btn{
+  width:100%;padding:9px 11px;border-radius:5px;font-size:13px;font-weight:600;
+  background:#2f5c78;border-color:#6895b2;color:#fff;white-space:nowrap;
+}
+.primary-btn:hover:not(:disabled){background:#3a6f8f}
+.primary-btn.is-amber{background:#8b642e;border-color:#d8ac6e;color:#fff7e8}
+.quiet-link{border:0;padding:2px 6px;font-size:11.5px;color:#93abc0;text-align:center}
+.quiet-link:hover{color:#dce9f5;background:transparent;text-decoration:underline}
+
+/* Right Drawer: Charts, Formulas, Tables & Diagnostic Card */
+.chart-box{background:var(--card-deep);border:1px solid #283b4c;border-radius:6px;padding:7px 9px}
+.stat-strip{
+  display:flex;justify-content:space-between;align-items:center;gap:6px;margin-top:5px;
+  padding:5px 8px;border-radius:4px;background:#132635;font-size:11.5px;color:#c8d8e4;
+}
+.stat-strip strong{color:var(--accent)}
+
+.formula-card{
+  background:var(--card);border:1px solid var(--line);border-radius:7px;padding:9px 11px;
+  font-size:12px;line-height:1.55;color:#d6e2ec;
+}
+.formula-card h3{margin:0 0 5px;font-size:13px;color:#f3ead5}
+.math-row{
+  margin:5px 0;padding:5px 7px;border-radius:4px;background:#0e1c28;border:1px solid #243748;
+  text-align:center;color:#eef4f9;overflow-x:auto;
+}
+math{font-size:12px}
+
+/* Calibration Table (2.2-2.3) */
+.cal-table-wrap{background:var(--card-deep);border:1px solid #283b4c;border-radius:6px;overflow-x:auto}
+table.cal-table{width:100%;border-collapse:collapse;font-size:11.5px;text-align:right}
+table.cal-table th,table.cal-table td{padding:4px 5px;border-bottom:1px solid #1e3040;font-variant-numeric:tabular-nums;white-space:nowrap}
+table.cal-table th{background:#122434;color:#9ab1c4;font-weight:600;text-align:right;font-size:10.5px}
+table.cal-table th:first-child,table.cal-table td:first-child{text-align:left;padding-left:7px}
+table.cal-table tr.is-cur{background:#d6ac7316}
+table.cal-table tr.is-done td:last-child{color:var(--teal);font-weight:600}
+table.cal-table td.is-fresh{color:#ffe1a8;background:#d6ac7328;font-weight:700}
+.star-tag{color:var(--accent);font-size:10px;margin-left:2px}
+
+.fit-eq{
+  display:flex;justify-content:space-between;align-items:center;gap:8px;
+  padding:7px 10px;border-radius:5px;background:#122634;border:1px solid #3c657d;font-size:12.5px;color:#e9f3f8;
+}
+.diag-card{
+  padding:9px 11px;border-radius:6px;background:#172939;border:1px solid #374e62;
+  border-left:3px solid var(--accent);font-size:11.5px;line-height:1.55;color:#d6e3ed;
+}
+.diag-card h4{margin:0 0 4px;font-size:12.5px;color:#f3dec0}
+.diag-card ol{margin:3px 0 5px;padding-left:17px}
+.diag-card li{margin:2px 0}
+.diag-card .think{margin:3px 0 0;font-size:11px;color:#9fc6de}
+
+/* Fly-to-manual card animation */
+.fly-thumb{
+  position:fixed;z-index:90;width:168px;padding:7px 9px;border-radius:6px;
+  background:#172d40;border:1px solid var(--accent);box-shadow:0 12px 26px #000a;
+  color:#f5e5c8;font-size:11px;pointer-events:none;
+  transition:transform .68s cubic-bezier(.22,.9,.28,1),opacity .68s ease;
+}
+
+/* Toast */
+#toast{
+  position:fixed;bottom:84px;left:50%;transform:translateX(-50%);z-index:80;
+  padding:8px 16px;border-radius:5px;background:#ece0c9;color:#1b2630;
+  font-size:12.5px;font-weight:600;box-shadow:0 6px 20px #0007;pointer-events:none;
+}
+
+/* Responsive adjustments */
+@media(max-width:1360px){
+  :root{--header-h:62px}
+  body.has-left{--left-w:344px}
+  body.has-right{--right-w:408px}
+  #left-21{gap:6px;padding:7px 12px 9px}
+  #left-21 .block{padding:6px 9px}
+  #circuit-svg{max-height:118px}
+  .svg-caption{font-size:10.5px}
+  .wire-opt{padding:5px 8px}
+}
+@media(max-width:1160px){
+  body.has-left{--left-w:320px}
+  body.has-right{--right-w:370px}
+  /* Under 1160px, keep middle #scene spacious when right drawer overlays or swaps cleanly */
+  body.has-left.has-right{--left-w:0px}
+  body.has-left.has-right #left-drawer{display:none}
+  #hud{padding:0 12px;gap:8px}
+  #task-hint{font-size:11.5px;padding:6px 10px}
+  #dock button{padding:8px 10px;font-size:12px}
+}
+
+#scene > canvas {display:block;width:100%;height:100%;touch-action:none}
+#scene-note{pointer-events:none}
+#hud{gap:14px}.hud-left{flex:0 1 auto;min-width:270px}#task-hint{min-width:180px;white-space:normal;font-size:13px;line-height:1.45}.crumb-line{flex-wrap:wrap}.crumb-sub{display:none}
+#scan-actions{display:flex;gap:8px;margin-top:8px}#scan-actions[hidden]{display:none}#scan-actions button{flex:1;padding:7px;font-size:12px}
+.drawer-body{scrollbar-width:thin}#dock{max-width:calc(100% - 20px);gap:2px}#dock button{padding:9px 10px;font-size:13px}.block-title{font-size:14px}.wire-opt strong{font-size:13px}
+#scene-note{font-size:11px}#left-tag:empty{display:none}
+@media(max-width:1160px){#hud{height:82px}:root{--header-h:82px}#task-hint{font-size:12px}.hud-left{min-width:225px;max-width:300px}.crumb-back{font-size:12px}#dock button{padding:8px}.drawer-body{font-size:13px}}
+@media(max-height:820px){.drawer-body{padding:10px}.block{padding:8px}.wire-opt{padding:5px 7px}.svg-frame{padding:5px}#circuit-svg{max-height:125px}.primary-btn{font-size:12px}.diag-card{font-size:12px}}
+#fit-svg {max-height:none}
+#finish-hint {margin:0 0 8px;color:#e9c48f;font-size:12px}
+.formula-card .math-row math {margin:6px 0}
+#dock button.active {box-shadow:inset 0 2px #d6ac73}
+</style>
+<link rel="stylesheet" href="../compact.css"><script defer src="../compact.js"></script></head>
+<body>
+
+<header id="hud">
+  <div class="hud-left">
+    <button class="icon-btn" title="菜单" aria-label="主菜单">≡</button>
+    <div class="crumbs">
+      <div class="crumb-line">
+        <button class="crumb-back" id="btn-back-ch1" title="通过过渡加载页返回第一章">01 实验预习与装置</button>
+        <span class="crumb-sep">›</span>
+        <span class="crumb-cur">02 磁场标定</span>
+        <span class="crumb-sep">›</span>
+        <span id="crumb-sub" style="color:var(--accent);font-weight:500">2.1 线圈接线与匀强场</span>
+      </div>
+      <div class="crumb-sub" id="hud-subline">空载标定工位 · 真空二极管已暂移，置入蓝色特斯拉计与 5 孔定位板</div>
+    </div>
+  </div>
+
+  <div id="task-hint">当前任务：打开 [🔌 电路与结构]，切换线圈接法并开启磁感线，观察亥姆霍兹线圈怎样产生匀强磁场</div>
+
+  <div class="hud-right">
+    <div class="view-switch">
+      <button id="btn-view-bench" class="active">实验台</button>
+      <button id="btn-view-tube" disabled title="当前工位已暂移真空二极管">管内</button>
+    </div>
+    <button class="reset-cam" id="btn-reset-cam" title="重置视角">↻</button>
+  </div>
+</header>
+
+
+
+<!-- LEFT DRAWER -->
+<aside id="left-drawer" class="drawer" hidden>
+  <div class="drawer-head">
+    <h2><span id="left-title">电路与结构</span><span class="tag" id="left-tag"></span></h2>
+    <button class="close-btn" id="close-left" aria-label="关闭左栏">×</button>
+  </div>
+
+  <div class="drawer-body" id="left-21">
+    <div class="svg-frame">
+      <svg id="circuit-svg" viewBox="0 0 336 146" width="100%" aria-label="亥姆霍兹线圈接线电路图"></svg>
+      <div class="svg-caption">当前励磁 CH1 = <span id="explore-current" class="mono" style="color:var(--accent)">0.50 A</span>（切换接线自动断电换线后再复通）</div>
+    </div>
+
+    <div class="block" style="padding:8px 10px">
+      <div class="block-title">线圈接线方式 <small>点击切换接线</small></div>
+      <div class="wire-modes" id="wire-modes"></div>
+    </div>
+
+    <div class="verdict-box" id="wire-verdict"></div>
+
+    <div class="block spacing-box">
+      <div class="spacing-head">
+        <span>线圈间距 <span class="mono">d</span> <small style="font-weight:400;color:var(--muted)">(自由观察)</small></span>
+        <span class="spacing-val mono" id="spacing-readout">d = 1.00 R (113.5 mm)</span>
+      </div>
+      <div class="spacing-track-wrap">
+        <div class="spacing-notch" title="d = R 亥姆霍兹吸附位"></div>
+        <input type="range" id="spacing-slider" class="range-discrete" min="0.50" max="1.80" step="0.02" value="1.00" aria-label="线圈间距比 d/R">
+      </div>
+      <div class="spacing-scale mono">
+        <span>0.5R</span>
+        <button type="button" class="snap-tag is-snapped" id="btn-snap-dr">◆ d = R 吸附</button>
+        <span>1.8R</span>
+      </div>
+    </div>
+
+    <div class="block">
+      <div class="toggle-row">
+        <label class="switch">
+          <input type="checkbox" id="chk-field-lines" checked>
+          <span class="switch-ui"></span>
+          <span>显示 3D 磁感线</span>
+        </label>
+        <button id="btn-open-bz" style="padding:5px 9px;font-size:12px;border-color:#53738b;color:#cce3f5">📈 查看轴向磁场曲线</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="drawer-foot" id="foot-21">
+    <button class="primary-btn" id="btn-goto-22">线圈原理已明确！进入特斯拉计标定 →</button>
+  </div>
+
+  <div class="drawer-body" id="left-22" hidden>
+    <div class="block">
+      <div class="ch1-head">
+        <span style="font-size:13px;font-weight:600">CH1 励磁电源 <small class="mono" style="color:var(--muted);font-weight:400">(串联顺接)</small></span>
+        <span class="ch1-val mono" id="ch1-readout">0.50 A</span>
+      </div>
+      <input type="range" id="ch1-slider" class="range-discrete" min="0" max="8" step="1" value="3" aria-label="CH1 励磁电流档位">
+      <div class="detents" id="ch1-detents"></div>
+      <div class="ch1-sub">
+        <span>离散 9 档（0.2–1.4 A 对齐实测表）</span>
+        <button class="mini-link" id="btn-zero-current">归零 0.00 A</button>
+      </div>
+    </div>
+
+    <div class="block meter-card">
+      <div class="block-title" style="margin-bottom:2px">特斯拉计 · 霍尔探头 <small></small></div>
+      <div class="meter-actions">
+        <button class="pill-btn" id="btn-meter-pwr">电源：关</button>
+        <button class="pill-btn" id="btn-probe-cap">保护壳：已套</button>
+      </div>
+      <div class="lcd-box">
+        <span class="lcd-pol mono" id="lcd-pol">--</span>
+        <div>
+          <span class="lcd-num mono is-off" id="lcd-val">--.--</span>
+          <span class="lcd-unit mono">mT</span>
+        </div>
+      </div>
+      <div class="lcd-sub">
+        <span id="lcd-probe-pos">探头位置：台面待命支架</span>
+        <span>霍尔芯片⊥轴向B</span>
+      </div>
+
+      <div class="plate-map">
+        <div style="display:flex;justify-content:space-between;font-size:11.5px;color:#b2c4d4">
+          <span>透明定位板 5 个测点（可与 3D 同步点击）</span>
+          <span class="mono" id="hole-progress" style="color:var(--teal)">0 / 5</span>
+        </div>
+        <div class="plate-grid" id="plate-grid"></div>
+      </div>
+
+      <div class="hint-strip" id="meter-hint">点击任意测点孔位：若尚未开机或拔壳，系统将顺滑自动完成并读数。</div>
+
+      <button class="primary-btn" id="btn-show-fit" hidden>查看标定记录并拟合 →</button>
+      <button class="primary-btn" id="btn-auto-scan" disabled>▶ 自动采完其余 7 档电流</button>
+    </div>
+  </div>
+
+  <div class="drawer-foot" id="foot-22" hidden>
+    <p id="finish-hint" hidden>先将励磁电流归零，再进入正式实验。</p>
+    <button class="primary-btn" id="btn-finish-ch2" disabled>磁场标定完成！开始正式磁截止实验 →</button>
+    <button class="quiet-link" id="btn-skip-ch2">跳过标定，直接进入正式实验 →</button>
+  </div>
+</aside>
+
+<!-- RIGHT DRAWER -->
+<aside id="right-drawer" class="drawer" hidden>
+  <div class="drawer-head">
+    <h2><span id="right-title">轴向磁场分布与原理</span><span class="tag" id="right-tag">亥姆霍兹条件</span></h2>
+    <button class="close-btn" id="close-right" aria-label="关闭右栏">×</button>
+  </div>
+
+  <!-- Right 2.1 -->
+  <div class="drawer-body" id="right-21">
+    <div class="chart-box">
+      <div class="block-title" style="margin-bottom:4px">
+        <span>理想线圈 · 轴向磁场 <i>B</i><sub>z</sub>(<i>z</i>)</span>
+        <small class="mono" id="bz-current">I_M = 0.50 A · 35 mm 管区已标出</small>
+      </div>
+      <svg id="bz-svg" viewBox="0 0 388 196" width="100%" aria-label="轴向磁场分布曲线"></svg>
+      <div class="stat-strip" id="bz-stats"></div>
+    </div>
+
+    <div class="formula-card" id="coil-principle">
+      <h3>亥姆霍兹匀强场推导</h3>
+      <div>单只圆环电流在轴线上距环心 <math><mi>z</mi></math> 处的磁场：</div>
+      <div class="math-row">
+        <math display="block">
+          <mrow>
+            <msub><mi>B</mi><mn>1</mn></msub>
+            <mrow><mo stretchy="false">(</mo><mi>z</mi><mo stretchy="false">)</mo></mrow>
+          </mrow>
+          <mo>=</mo>
+          <mfrac>
+            <mrow><msub><mi>μ</mi><mn>0</mn></msub><mi>N</mi><mi>I</mi><msup><mi>R</mi><mn>2</mn></msup></mrow>
+            <mrow><mn>2</mn><msup><mrow><mo stretchy="false">(</mo><msup><mi>R</mi><mn>2</mn></msup><mo>+</mo><msup><mi>z</mi><mn>2</mn></msup><mo stretchy="false">)</mo></mrow><mrow><mn>3</mn><mo>/</mo><mn>2</mn></mrow></msup></mrow>
+          </mfrac>
+        </math>
+      </div>
+      <div id="pair-description"></div>
+      <div class="math-row" id="pair-equation"></div>
+      <div id="symmetry-explanation"></div>
+      <div id="helmholtz-condition">
+      <div class="math-row">
+        <math display="block">
+          <msub>
+            <mrow><mfrac><mrow><msup><mi>d</mi><mn>2</mn></msup><msub><mi>B</mi><mi>z</mi></msub></mrow><mrow><mi>d</mi><msup><mi>z</mi><mn>2</mn></msup></mrow></mfrac><mo>|</mo></mrow>
+            <mrow><mi>z</mi><mo>=</mo><mn>0</mn></mrow>
+          </msub>
+          <mo>=</mo><mn>0</mn>
+          <mspace width="0.5em"/><mo>⟹</mo><mspace width="0.5em"/><mi>d</mi><mo>=</mo><mi>R</mi>
+        </math>
+      </div>
+      <div class="math-row">
+        <math display="block">
+          <mrow>
+            <msub><mi>B</mi><mi>z</mi></msub>
+            <mrow><mo stretchy="false">(</mo><mn>0</mn><mo stretchy="false">)</mo></mrow>
+          </mrow>
+          <mo>=</mo>
+          <msup><mrow><mo>(</mo><mfrac><mn>4</mn><mn>5</mn></mfrac><mo>)</mo></mrow><mrow><mn>3</mn><mo>/</mo><mn>2</mn></mrow></msup>
+          <mfrac><mrow><msub><mi>μ</mi><mn>0</mn></msub><mi>N</mi><mi>I</mi></mrow><mi>R</mi></mfrac>
+          <mo>≈</mo><mn>0.7155</mn><mfrac><mrow><msub><mi>μ</mi><mn>0</mn></msub><mi>N</mi><mi>I</mi></mrow><mi>R</mi></mfrac>
+        </math>
+      </div>
+      </div>
+      <div style="font-size:11.5px;color:#b2c4d4;margin-top:3px">
+        实际绕组存在截面厚度与装配公差，难以靠尺量匝数算准；接下来须用特斯拉计建立 <math><mi>B</mi><mo>–</mo><msub><mi>I</mi><mi>M</mi></msub></math> 实测标定线。
+      </div>
+    </div>
+  </div>
+
+  <!-- Right 2.2-2.3 -->
+  <div class="drawer-body" id="right-23" hidden>
+    <div class="cal-table-wrap">
+      <table class="cal-table" id="cal-table">
+        <thead>
+          <tr>
+            <th><i>I</i><sub>M</sub>/A</th><th>1 左上</th><th>2 右上</th><th>3 中心C</th><th>4 左下</th><th>5 右下</th><th>均值/mT</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="chart-box">
+      <div class="block-title" style="margin-bottom:3px">
+        <span><i>B</i> – <i>I</i><sub>M</sub> 实测散点与直线拟合</span>
+        <small>小点为 5 孔散布 · 实心圆为均值</small>
+      </div>
+      <svg id="fit-svg" viewBox="0 0 388 198" width="100%" aria-label="磁场标定散点与拟合曲线"></svg>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <button class="primary-btn" id="btn-fit" disabled>直线拟合 <i>B</i>(<i>I</i><sub>M</sub>)</button>
+      <button class="primary-btn is-amber" id="btn-save-book" disabled>保存数据并存入讲义</button>
+    </div>
+
+    <div class="fit-eq" id="fit-eq" hidden>
+      <span class="mono" style="font-weight:600">B(I_M) = 4.231·I_M − 0.188 mT</span>
+      <span class="mono" style="color:var(--teal)">R² = 0.9999</span>
+    </div>
+
+    <div class="diag-card" id="diag-card" hidden>
+      <h4>为什么励磁为 0 时仍有约 −0.19 mT 的截距？</h4>
+      <div>这条拟合直线向零电流外推，截距约为 <span class="mono">−0.188 mT</span>。非零截距通常来自几项偏差的叠加：</div>
+      <ol>
+        <li><b>特斯拉计自身零漂与系统误差</b>：霍尔元件零点温漂及仪表在低场量程下的系统偏差；</li>
+        <li><b>地磁场轴向分量</b>：当地地磁场沿着线圈轴线方向的投影（约 0.03–0.05 mT）；</li>
+        <li><b>周边与整栋实验楼的杂散场</b>：台面电源变压器、铁磁构件剩磁，以及同一实验室或实验楼内其他仪器的杂散磁场。</li>
+      </ol>
+      <div class="think">思考：若将整台实验台水平旋转 180° 重做标定，斜率和截距哪一个更容易发生变化？</div>
+    </div>
+  </div>
+</aside>
+
+<!-- CENTER SCENE + DOCK -->
+<main id="scene">
+  
+  <div class="scene-badge" id="scene-note">拖动旋转 · 滚轮缩放 · 点击测点移动探头</div>
+
+  <nav id="dock" aria-label="实验工具">
+    <button id="dock-book"><span class="ico">📖</span><span>实验讲义</span></button>
+    <button id="dock-circuit"><span class="ico">🔌</span><span>电路与结构</span></button>
+    <button id="dock-inst"><span class="ico">🎛️</span><span>仪器控制</span></button>
+    <button id="dock-rec"><span class="ico">📊</span><span>标定记录</span></button>
+  </nav>
+</main>
+
+<div id="toast" hidden></div>
+
+<script type="module" src="studio.js"></script></body></html>

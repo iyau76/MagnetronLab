@@ -1,0 +1,52 @@
+<div class="research-intro"><div><p class="eyebrow">自由探索 / 独立电子模型</p><h1>换一个条件，看曲线怎么变</h1><dl class="research-spec"><div><dt>已知</dt><dd>真实曲线只在截止附近变化，其他位置几乎不动。</dd></div><div><dt>本步要得到</dt><dd>一次只改一个条件，指出它在哪一段曲线留下了可见的差别。</dd></div></dl></div><div id="status" role="status">载入已有模型…</div></div><div class="research-layout">
+<aside class="parameters">
+ <h2 class="panel-step"><span class="step-number">1</span>选一个工作点</h2>
+ <div class="section-title"><span>实验条件</span><button id="reset" class="text-button">恢复预设</button></div>
+ <label>加速电压 <output id="anode_V-value"></output><input id="anode_V" data-param type="range" min="3" max="14" step="0.001"></label>
+ <label>灯丝两端电势差 <output id="filament_V-value"></output><input id="filament_V" data-param type="range" min="0" max="5" step="0.001"></label>
+ <label class="switch"><input id="gradient" data-param type="checkbox" checked><span>保留灯丝电势梯度</span></label>
+ <p class="hint">关闭时保持平均加速电势差与温度不变，这就是一组单因素对照。</p>
+ <label>磁场强度 <output id="field_mT-value"></output><input id="field_mT" data-param type="range" min="0" max="8" step="0.00001"></label>
+ <label>扫描上限 <output id="field_max_mT-value"></output><input id="field_max_mT" data-param type="range" min="4" max="8" step="0.25"></label><label>管轴与磁场夹角 <output id="tilt_deg-value"></output><input id="tilt_deg" data-param type="range" min="-25" max="25" step="1"></label>
+ <details class="model-note"><summary>计算区域的几何、温度与采样</summary>
+ <label>有效总长度 <output id="length_mm-value"></output><input id="length_mm" data-param type="range" min="10" max="60" step="1"></label>
+ <label>中央收集段长度 <output id="central_mm-value"></output><input id="central_mm" data-param type="range" min="2" max="19" step="0.5"></label>
+ <label>灯丝温度 <output id="temperature_K-value"></output><input id="temperature_K" data-param type="range" min="1500" max="2400" step="50"></label>
+ <label>阳极内半径 <output id="anode_radius_mm-value"></output><input id="anode_radius_mm" data-param type="range" min="3" max="7" step="0.05"></label>
+ <label>灯丝半径 <output id="filament_radius_um-value"></output><input id="filament_radius_um" data-param type="range" min="25" max="100" step="2.5"></label>
+ <button id="cardRadius" class="text-button">使用参数卡半径 37.5 μm</button>
+ <label>发射源强 <output id="emission_uA-value"></output><input id="emission_uA" data-param type="range" min="1" max="100" step="1"></label>
+ <label class="select-label">统计粒子数<select id="particles" data-param><option>1024</option><option selected>4096</option><option>8192</option><option>32768</option></select></label>
+ <label class="select-label">计算精度<select id="accuracy" data-param><option value="statistical">电流统计</option><option value="reference">精细复核</option></select></label>
+ <p class="hint">电流统计适合参数扫描；比较微小差异时可切换精细复核。单电子轨迹始终精算。</p>
+ <label class="select-label">计算资源<select id="compute_threads" data-param><option value="4" selected>快速 · 4 线程</option></select></label>
+ <p class="hint">微小隆起建议用 32768 粒子复核。源强只把收集比例换算成电流，没有引入空间电荷。</p>
+ </details>
+ <h2 class="panel-step"><span class="step-number">2</span>算一次</h2>
+ <button id="saveResearch" class="secondary wide">保存研究工作点与解释</button><button id="point" class="secondary wide">计算当前工作点</button><button id="scan" class="primary wide">扫描磁场，绘制曲线</button>
+ <button id="cancel" class="secondary wide" hidden>取消当前计算</button>
+ <div id="progress" class="progress"><i></i></div><p id="computeNote" class="hint">同一组初始电子用于各磁场工作点。</p>
+</aside>
+<section class="workspace">
+ <h2 class="panel-step"><span class="step-number">3</span>电子去了哪里</h2>
+ <div class="scene-toolbar"><nav id="views"><button data-view="internal" class="active">管内观察</button><button data-view="bench">实验台</button><button data-view="explode">结构拆解</button></nav><button id="home" class="icon-button" title="恢复视角">⌂</button></div>
+ <div id="viewport"><div id="sceneCaption"><b>三段收集筒 · 纵向剖面</b><span>左键拖动旋转 · 滚轮缩放大小 · 右键拖动平移</span></div><div id="benchLoading" hidden>正在载入完整实验台…</div><div id="labels"></div><div id="fieldKey" hidden><span>电势 / V</span><i></i><div><b id="vmin">0</b><b id="vmax">10</b></div></div><div id="sceneFooter">长度单位 mm · 电子标记为可见性放大</div></div>
+ <div class="view-options"><label><input type="checkbox" id="cutaway" checked> 剖开收集筒</label><label><input type="checkbox" id="potential"> 电势分布</label><label><input type="checkbox" id="trajectories" checked> 电子轨迹</label><button id="play" class="text-button">暂停电子</button><span id="clock">0.0 ns</span></div>
+ <div class="view-options bench-only"><label><input type="checkbox" id="fieldLines"> 亥姆霍兹线圈磁场线</label><label><input type="checkbox" id="coilsOnly"> 只显示线圈和磁场</label></div>
+ <div class="story-bar" id="storyBar"><button type="button" id="storyToggle" class="secondary">暂停拆解动画</button><span id="storyCaption">完整实验台 · 707 同型装置外观参照</span><input type="range" id="storySeek" min="0" max="14" step="1" value="0" aria-label="跳转到拆解动画的某一段"></div>
+ <div class="readings"><div><small>中央阳极 A₁</small><strong id="A1">—</strong><span>μA · 中央收集</span></div><div><small>保护环 A₂</small><strong id="A2">—</strong><span>μA · 两保护环合计</span></div><div><small>收集合流 A₁＋A₂</small><strong id="sum">—</strong><span>μA</span></div></div>
+ <div class="task"><span class="eyebrow">④ 做一次对照</span><b>中央电流为什么会先升后降？</b><p>先扫描有梯度的模型，再保持平均加速电势差、去掉梯度做对照。点曲线上的工作点，看同一批电子的去向怎么变。</p><button id="compare" class="secondary">去掉梯度，计算对照</button></div>
+</section>
+<aside class="results">
+ <h2 class="panel-step"><span class="step-number">5</span>读结果</h2>
+ <div class="section-title"><span>磁截止曲线</span><span><button id="export" class="text-button">JSON</button><button id="exportCsv" class="text-button">CSV</button></span></div>
+ <div class="legend"><span class="a1">A₁</span><span class="a2">A₂</span><span class="total">合流</span><span class="previous" id="compareLegend" hidden>上次三通道</span></div>
+ <p id="referenceInfo" class="model-reference" hidden></p><div class="reference-tools"><button id="pinComparison" class="text-button">保留本组作对照</button><button id="clearReference" class="text-button">清除对照</button></div><div id="plotModes" class="segmented"><button data-plot="current" class="active">电流</button><button data-plot="normalized">零场归一</button><button data-plot="bump">隆起放大</button></div>
+ <div id="chart" aria-label="收集电流随磁场变化曲线"></div><p id="curveCaption" class="hint">点击曲线，追踪对应工作点。</p>
+ <div id="finding" class="finding">正在载入扫描结果。</div>
+ <div class="divider"></div><div class="section-title">这一批电子去了哪里？</div>
+ <div id="destinations"></div><p id="balance" class="hint"></p>
+ <details class="model-note"><summary>运行性能</summary><p id="renderStats">正在测量绘图开销</p><p id="assetStats"></p><p id="taskStats">尚未运行新计算</p><p class="hint">绘图耗时是浏览器提交画面的时间。空闲或页面隐藏时暂停绘图；计算在独立进程中进行。</p></details>
+ <details class="model-note"><summary>当前模型与显示依据</summary><p>独立电子的三维洛伦兹运动；灯丝表面热发射；三段圆筒同半径、同电势，分段统计收集。</p><p>本轮边界：无绝缘缝隙、无空间电荷，轴向离开计算区域单列统计。管长与中央段长度采用可调的预研参数。</p><p>实验台外观源于 707 同型装置照片。这里显示的曲线均为计算结果。</p></details>
+</aside>
+</div><div id="toast" role="alert" hidden></div>

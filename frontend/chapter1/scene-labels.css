@@ -1,0 +1,11 @@
+.assembly-labels{position:absolute;inset:0;pointer-events:none;z-index:3}.assembly-labels[hidden]{display:none}.assembly-leaders{position:absolute;inset:0;width:100%;height:100%;overflow:hidden;pointer-events:none}.assembly-leaders polyline{fill:none;stroke:#a9bbc6;stroke-width:1;opacity:.58}.assembly-leaders circle{fill:#e0c18e}.assembly-card{position:absolute;left:0;top:0;padding:8px 10px;text-align:left;background:#121d27e8;border:1px solid #43515e;border-radius:4px;color:#e9edf0;font:12px/1.4 'Microsoft YaHei',sans-serif;pointer-events:auto;cursor:pointer;transition:opacity .18s,border-color .18s,background .18s;box-shadow:0 3px 15px #0003}.assembly-card b{display:block;font-weight:600}.assembly-card span{display:block;color:#aab7c2;font-size:11px;margin-top:3px}.assembly-labels[data-hover]:not([data-hover=""]) .assembly-card:not(.is-hover){opacity:.38}.assembly-card.is-hover,.assembly-card:focus-visible{border-color:#d6b37d;background:#26313a;outline:none}.assembly-scale{position:absolute;left:20px;bottom:82px;display:flex;flex-direction:column;gap:5px;color:#a9b9c5;font:11px/1.4 Consolas,'Microsoft YaHei',sans-serif}.assembly-scale i{display:block;height:6px;border:1px solid #a9b9c5;border-top:0}.assembly-legend{position:absolute;right:20px;bottom:82px;display:flex;gap:14px;font-size:11px;color:#c4d1db}.magnetic-key{color:#86b9e3}.electron-key{color:#e4bd7e}@media(max-width:1000px){.assembly-card{padding:6px;font-size:11px}.assembly-card span{font-size:10px}.assembly-legend{gap:5px;flex-direction:column}}
+
+.electric-key{color:#d79f87}
+.assembly-card{background:#0d151de8;border-color:#49616b;border-left:2px solid #81b8bd;border-radius:3px;font-size:13px;padding:9px 11px;box-shadow:0 4px 18px #0003}
+.assembly-card span{font-size:11.5px;line-height:1.5;color:#bac7cd}
+.assembly-card[data-structure-part=filament]{border-left-color:#deb873}
+.assembly-leaders polyline{stroke:#9dbbc4;stroke-width:1}
+.assembly-leaders circle{fill:#b9e4df;filter:drop-shadow(0 0 3px #87d2c8)}
+.assembly-scale{left:auto;right:26px;bottom:132px;color:#c0ced5}
+.assembly-legend{right:26px;bottom:92px}
+@media(max-width:1100px){.assembly-card{padding:8px;font-size:12px}.assembly-card span{font-size:11px}.assembly-scale{left:18px;right:auto;bottom:105px}.assembly-legend{right:18px;bottom:82px}}

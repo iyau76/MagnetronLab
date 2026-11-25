@@ -1,0 +1,195 @@
+﻿/* The document in each chapter owns its scroll; the host keeps its one WebGL renderer. */
+#compact-views { display: none; }
+
+@media (max-width: 700px), (pointer: coarse) and (max-width: 1100px), (max-width: 960px) and (max-height: 540px) {
+  :root { -webkit-text-size-adjust: 100%; }
+  :is(#hud,#top) {
+    display: flex; flex-wrap: wrap; align-content: center; gap: 4px 8px;
+    padding: 5px 8px; min-width: 0;
+  }
+  :is(#hud,#top) .hud-left { flex: 1 1 120px; min-width: 0; gap: 6px; }
+  :is(#hud,#top) :is(.hud-right,.view-controls) { min-width: 0; gap: 4px; flex-wrap: wrap; }
+  :is(#hud,#top) .crumb-line { flex-wrap: wrap; }
+  :is(#hud,#top) :is(.crumb-line span,.crumb-line i) { display:none; }
+  :is(#hud,#top) button { padding: 5px 7px; min-height: 33px; font-size: 12px; }
+  :is(#hud,#top) #task-hint {
+    order: 3; width: 100%; max-width: none; margin: 0; padding: 3px 5px;
+    font-size: 12px; line-height: 1.45; max-height: 4.8em; overflow-y: auto;
+  }
+  #dock {
+    position:fixed; z-index:31; inset:auto 0 0; width:100%; max-width:none;
+    justify-content:safe center; transform:none; overflow-x:auto;
+    border-radius:0; gap:2px; padding:3px 4px max(3px,env(safe-area-inset-bottom));
+  }
+  #dock button { flex:0 0 auto; min-height:40px; padding:5px 7px; font-size:12px; }
+  :is(.modal-card,#detail) {max-width:96vw; max-height:88dvh; overflow:auto}
+  [hidden] {display:none!important}
+
+  /* Bench, wiring and instrument controls */
+  [data-surface=bench] { --header-height:104px; --sidebar-width:min(100vw,440px); }
+  [data-surface=bench] #hud {height:var(--header-height)}
+  [data-surface=bench] .breadcrumb strong {font-size:14px}
+  [data-surface=bench] #scene {left:0}
+  [data-surface=bench] :is(#instrument-panel,#drawer) {bottom:47px;overflow-y:auto;overscroll-behavior:contain}
+  [data-surface=bench] :is(.instrument-body,.diagram-area) {flex:none;height:auto;min-height:0}
+  [data-surface=bench] .circuit-diagram {height:280px;flex:none}
+  [data-surface=bench] .structure-diagram {height:205px;flex:none}
+  [data-surface=bench] .guard-comparison {height:125px;flex:none}
+  [data-surface=bench] .instrument-footer {position:static}
+  [data-surface=bench] #scene-note {bottom:51px;left:8px}
+  [data-surface=bench] #launcher {overflow-y:auto;padding:18px 12px;justify-content:safe center}
+  [data-surface=bench] .launcher-heading {margin-top:0}
+  [data-surface=bench] .launcher-heading p {margin-top:22px}
+  [data-surface=bench] .launcher-actions {margin-top:16px}
+  [data-surface=bench] #launcher footer {position:static;margin-top:12px;gap:8px;flex-wrap:wrap;justify-content:center}
+
+  /* Each original spread reads top to bottom on a narrow sheet. */
+  [data-surface=book] .book-stage {inset:0;justify-content:flex-start;align-items:stretch;padding:4px;overflow:hidden}
+  [data-surface=book] .book-header-bar {width:100%;padding:0;align-items:center;gap:4px;flex:none;min-width:0}
+  [data-surface=book] .spread-tabs {flex:1;min-width:0;overflow-x:auto;gap:2px}
+  [data-surface=book] .spread-tab {flex:0 0 auto;font-size:12px;padding:8px 7px;min-height:38px}
+  [data-surface=book] .spread-tab .num {display:none}
+  [data-surface=book] .book-actions-top {padding:0;flex:none}
+  [data-surface=book] .close-book-btn {padding:6px;min-height:36px}
+  [data-surface=book] .book-shell {width:100%;height:auto;min-height:0;flex:1;padding:3px;overflow:hidden}
+  [data-surface=book] .paper-stack {display:block;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin}
+  [data-surface=book] .paper-stack::after,[data-surface=book] .locked-bookmark {display:none}
+  [data-surface=book] .page {height:auto;min-height:0;padding:14px clamp(14px,4vw,32px);overflow:visible}
+  [data-surface=book] .page.right {border-top:2px solid var(--paper-edge)}
+  [data-surface=book] .page-body {flex:none;min-height:0}
+  [data-surface=book] .page-footer {margin-top:14px}
+  [data-surface=book] .p1-figure-box {min-height:200px}
+  [data-surface=book] .guess-grid {grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:auto}
+  [data-surface=book] .guess-card {min-height:103px}
+  [data-surface=book] .p6-closing-bar {flex-wrap:wrap}
+  [data-surface=book] :is(.sandbox-split,.compare-duo) {min-height:210px}
+  [data-surface=book] .sandbox-split canvas {max-width:100%}
+
+  /* On touch screens drawers follow the scene in document order. */
+  :is([data-surface=calibration],[data-surface=cutoff],[data-surface=research]),
+  :is([data-surface=calibration],[data-surface=cutoff],[data-surface=research]) body {
+    width:100%;height:100%;min-height:0;overflow:hidden;
+  }
+  :is([data-surface=calibration],[data-surface=cutoff],[data-surface=research]) body {
+    display:flex;flex-direction:column;overflow-y:auto;overscroll-behavior:contain;
+    padding-bottom:58px;scroll-padding-top:8px;
+  }
+  :is([data-surface=calibration],[data-surface=cutoff],[data-surface=research]) :is(#hud,#top) {position:relative;inset:auto;order:-4;height:auto;flex:none}
+  :is([data-surface=calibration],[data-surface=cutoff]) #scene,
+  [data-surface=research] body #stage {
+    position:relative;inset:auto;width:100%;height:clamp(215px,45dvh,480px);
+    min-height:0;flex:none;order:-2;transition:none;
+  }
+  :is([data-surface=calibration],[data-surface=cutoff]) .drawer {
+    position:relative;inset:auto;width:100%;height:auto;max-height:none;min-height:0;flex:none;overflow:visible;transition:none;
+  }
+  body.has-left.has-right #left-drawer:not([hidden]) {display:flex}
+  body:not(.has-left) #left-drawer,body:not(.has-right) #right-drawer {display:none}
+  .drawer .drawer-body {flex:none;overflow:visible;min-height:0;height:auto}
+  .drawer .drawer-foot {position:static}
+  #potential-card {max-width:96vw;max-height:78dvh;overflow:auto}
+  [data-surface=cutoff] #spotlight {display:none}
+  body[data-stage=analysis] #tab-fit,body[data-stage=cliffhanger] .comparison-plots {grid-template-columns:minmax(0,1fr);grid-template-rows:auto}
+  [data-surface=cutoff] :is(#scan-svg,#fit-card svg,#construction-panel svg) {min-height:185px}
+  [data-surface=cutoff] #dialogue-wrap,[data-surface=research] #conversation {
+    position:relative;inset:auto;transform:none;width:auto;max-width:100%;height:auto;
+    flex:none;margin:7px;order:-3;padding:10px 12px;min-height:0;
+  }
+  #dialogue-text,#dialogue {font-size:14px;line-height:1.55}
+  :is(.dialogue-actions,.dialog-actions) {flex-wrap:wrap}
+
+  [data-surface=research] #workspace {position:static;display:flex;flex-direction:column;flex:none;min-width:0}
+  [data-surface=research] body #analysis,[data-surface=research] #left-panel {
+    position:relative;inset:auto;display:flex;flex-direction:column;
+    width:100%;max-width:100%;height:auto;min-height:0;flex:none;overflow:visible;
+    padding:12px;box-shadow:none;border-radius:0;
+  }
+  [data-surface=research] body:not(.has-right):not([data-kind=sandbox]) #analysis {display:none}
+  [data-surface=research] body[data-layout=focus].has-right #stage {display:none}
+  [data-surface=research] body[data-layout=deck] #stage {height:auto;min-height:290px}
+  [data-surface=research] body[data-layout=deck] #synthesis-deck {position:relative;inset:auto}
+  [data-surface=research] :is(#chart,#controls) {height:auto;max-height:none;overflow:visible;min-width:0}
+  [data-surface=research] .focus-grid,[data-surface=research] .focus-grid.three,[data-surface=research] .map-focus {grid-template-columns:minmax(0,1fr)}
+  [data-surface=research] #chart>svg.chart {height:auto;max-height:none}
+  [data-surface=research] #scene-readout {gap:8px;padding:5px 7px}
+  [data-surface=research] #scene-readout strong {font-size:15px}
+  [data-surface=research] #full-bar {min-width:0;width:calc(100% - 12px);flex-wrap:wrap;bottom:3px}
+  [data-surface=research] #clues {bottom:52px;right:5px;max-height:72dvh;overflow:auto}
+
+  /* One active instrument per view. Keep the simulation and canvas mounted. */
+  [data-surface=research] body[data-kind=sandbox] {padding-bottom:0}
+  body[data-kind=sandbox] #compact-views {display:flex;flex:none;order:-3;gap:3px;padding:4px;background:var(--bg);position:sticky;top:0;z-index:14}
+  #compact-views button {flex:1;min-height:39px;padding:4px;font-size:13px}
+  #compact-views button[aria-pressed=true] {background:#cda972;color:#15212b}
+  body[data-kind=sandbox] #workspace {flex:1}
+  [data-surface=research] body[data-kind=sandbox] #stage {height: max(260px,55dvh);order:0}
+  [data-surface=research] body[data-kind=sandbox] #synthesis-deck {position:relative;inset:auto;width:100%;height:auto;min-height:290px;overflow:visible}
+  body[data-kind=sandbox] .free-chart-toolbar {flex-wrap:wrap;gap:5px}
+  body[data-kind=sandbox] .free-controls .button-row {padding-left:0}
+  body[data-kind=sandbox] #analysis #chart {overflow:visible}
+  body[data-kind=sandbox]:not(.stage-full):not([data-pane=parameters]) #left-panel,
+  body[data-kind=sandbox]:not(.stage-full):not([data-pane=electron]) #analysis,
+  body[data-kind=sandbox]:not(.stage-full):is([data-pane=parameters],[data-pane=electron]) #stage,
+  body[data-kind=sandbox][data-pane=scene] #synthesis-deck {display:none}
+  [data-surface=research] body[data-kind=sandbox][data-pane=curve]:not(.stage-full) #stage {height:auto;overflow:visible}
+  body[data-kind=sandbox][data-pane=curve]:not(.stage-full) #stage>:not(#synthesis-deck) {visibility:hidden}
+  [data-surface=research] body.stage-full[data-kind=sandbox] #stage {height:calc(100dvh - 130px)}
+  body.stage-full #compact-views {display:none}
+}
+@media(max-width:540px) {
+  [data-surface=book] :is(.sandbox-split,.compare-duo) {grid-template-columns:minmax(0,1fr)}
+  [data-surface=book] .book-header-bar {align-items:flex-start}
+  [data-surface=research] .free-slider {grid-template-columns:82px minmax(55px,1fr) 62px}
+}
+
+@media (max-width:700px), (pointer:coarse) and (max-width:1100px), (max-width:960px) and (max-height:540px) {
+  [data-surface=bench] #dock {z-index:14}
+  [data-surface=book] .prose {font-size:14px;line-height:1.7}
+  [data-surface=book] .section-title {font-size:19px}
+}
+@media (max-width:700px), (pointer:coarse) and (max-width:1100px), (max-width:960px) and (max-height:540px) {
+  [data-surface=calibration] body:not(.has-left):not(.has-right) #scene {flex:1 0 65dvh}
+  [data-surface=research] .free-map text, [data-surface=research] .free-trace text {font-size:13px}
+  [data-surface=research] .free-chart-toolbar,[data-surface=research] .free-foot {row-gap:8px}
+}
+@media (max-width:700px), (pointer:coarse) and (max-width:1100px), (max-width:960px) and (max-height:540px) {
+  [data-surface=calibration] #hud .crumb-cur {display:inline;font-size:14px;font-weight:650}
+  [data-surface=calibration] .crumb-line {gap:3px}
+  [data-surface=calibration] #btn-back-ch1 {font-size:11px;max-width:65px;line-height:1.2}
+}
+@media (max-width:700px), (pointer:coarse) and (max-width:1100px), (max-width:960px) and (max-height:540px) {
+  :is([data-surface=calibration],[data-surface=cutoff]) :is(#left-drawer,#right-drawer) {width:100%}
+}
+@media (max-width:700px), (pointer:coarse) and (max-width:1100px), (max-width:960px) and (max-height:540px) {
+  [data-surface=research] body.plot-expanded.has-right[data-layout=scene] #analysis {
+    position:fixed;inset:4px;z-index:45;width:auto;max-width:none;height:auto;
+    display:block;overflow:auto;border:1px solid var(--line);background:var(--panel);
+  }
+  [data-surface=research] body.plot-expanded #analysis .analysis-heading {
+    position:sticky;top:-12px;z-index:2;background:var(--panel);padding:6px 0;
+  }
+}
+
+/* Keep chapter actions inside the touch viewport and above the fixed tool dock. */
+@media (max-width:700px), (pointer:coarse) and (max-width:1100px), (max-width:960px) and (max-height:540px) {
+  [data-surface=bench] #dock-records:disabled {display:none}
+  :is([data-surface=bench],[data-surface=calibration],[data-surface=cutoff]) #dock {box-sizing:border-box;bottom:0}
+  :is([data-surface=bench],[data-surface=calibration],[data-surface=cutoff]) #dock button {flex:1 1 0;min-width:0;padding-inline:4px;white-space:normal;line-height:1.3}
+  [data-surface=cutoff] body {box-sizing:border-box;padding-bottom:calc(72px + env(safe-area-inset-bottom));scroll-padding-bottom:calc(72px + env(safe-area-inset-bottom))}
+  [data-surface=cutoff] body[data-stage] :is(#right-drawer,#left-drawer) {position:static;inset:auto;transform:none;width:100%;box-sizing:border-box}
+  [data-surface=cutoff] #dialogue-wrap {position:static;box-sizing:border-box;width:calc(100% - 14px);order:0}
+  [data-surface=cutoff] :is(#sweep-controls,#tab-curves,#tab-fit,#tab-ideal,#analysis-visual,#analysis-summary) {flex:none;min-width:0;height:auto;max-height:none;overflow:visible}
+  [data-surface=cutoff] body[data-stage=analysis] #tab-fit {grid-template-rows:auto;align-items:start}
+  [data-surface=cutoff] body[data-stage=analysis] #analysis-summary {align-self:start;width:100%}
+  [data-surface=cutoff] body[data-stage=analysis] :is(#fit-card,#construction-panel) {max-height:none;flex:none}
+  [data-surface=cutoff] body[data-stage=analysis] :is(#fit-card,#construction-panel) svg {flex:none;height:auto;max-height:none;width:100%}
+  [data-surface=cutoff] #potential-card {box-sizing:border-box;inset:8px 8px auto;width:calc(100% - 16px);max-width:none;max-height:calc(100dvh - 76px - env(safe-area-inset-bottom));padding:14px;justify-content:flex-start;z-index:32}
+  [data-surface=cutoff] #potential-card > * {flex-shrink:0}
+  [data-surface=cutoff] #potential-svg {width:100%;height:auto;min-height:130px}
+  [data-surface=cutoff] #probe-options {flex-wrap:wrap;gap:6px}
+  [data-surface=cutoff] #probe-compare {margin-left:0}
+  [data-surface=cutoff] #potential-readout {min-width:0;gap:8px;flex-wrap:wrap}
+  [data-surface=cutoff] #potential-readout .triple {grid-template-columns:minmax(0,1fr);gap:8px}
+  [data-surface=cutoff] #potential-readout .triple > div {padding-block:5px;border-bottom:1px solid #3a5364}
+  [data-surface=cutoff] #potential-readout .triple strong {font-size:18px}
+}

@@ -1,0 +1,74 @@
+.physics-diagram{display:block;width:100%;height:auto;overflow:visible;color:#41413b;font-family:"Noto Sans SC","Microsoft YaHei",sans-serif;font-size:16px;--diagram-paper:#f7f4eb;--diagram-copper:#99704c;--diagram-teal:#477d79}
+.physics-diagram path,.physics-diagram rect,.physics-diagram circle,.physics-diagram ellipse{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.physics-diagram text{fill:currentColor;stroke:none}.physics-diagram .center{text-anchor:middle}.physics-diagram .end{text-anchor:end}.physics-diagram .small{font-size:14px}.physics-diagram .meter-label{font-size:15px}
+.physics-diagram .glass{fill:#a5b9b30a;stroke:#a2aaa4}.physics-diagram .electrode{fill:#b6a38b40;stroke:#827762}.physics-diagram .guard{fill:#a4b7ae30;stroke:#7d9188}.physics-diagram .filament{stroke:var(--diagram-copper);stroke-width:2.7}.physics-diagram .symbol{fill:var(--diagram-paper)}
+.circuit-diagram .part{color:#8e938e;cursor:pointer}.circuit-diagram .part:hover,.circuit-diagram .part:focus,.circuit-diagram .part.is-selected{color:#41413b;outline:none}.circuit-diagram .part:hover .symbol,.circuit-diagram .part.is-selected .symbol{stroke:var(--diagram-teal);stroke-width:2.4}.circuit-diagram .lead{color:#b6b9b2;cursor:pointer;outline:none}.circuit-diagram .wire-hit{stroke:transparent;stroke-width:14;pointer-events:stroke}.circuit-diagram .wire{pointer-events:none;transition:stroke .25s,stroke-width .25s}.circuit-diagram .lead:hover .wire,.circuit-diagram .lead:focus .wire{stroke:var(--diagram-teal);stroke-width:2.6}.circuit-diagram .lead.is-lit .wire{stroke:#3e433e}.circuit-diagram .lead.is-selected .wire{stroke:var(--diagram-copper);stroke-width:2.8;stroke-dasharray:9 2;animation:diagram-current .7s linear 1}.circuit-diagram .junction{fill:#858d84;stroke:none}.physics-diagram .divider{stroke:#cac9bf;stroke-width:.8}.physics-diagram .axis{stroke:#b4b7ae;stroke-dasharray:5 6;stroke-width:1}.physics-diagram .annotation,.physics-diagram .dimension{stroke:#8a9288;stroke-width:1}.physics-diagram .dimension-label{font-size:14px}.physics-diagram .terminal{stroke:#666e63}.physics-diagram .electrode-line{stroke:#756d5a;stroke-width:5}.physics-diagram .gap-mark{stroke:var(--diagram-paper);stroke-width:5}.physics-diagram .field-line{stroke:var(--diagram-teal);stroke-width:1.3}.physics-diagram .secondary{opacity:.5}.physics-diagram .apparatus-wall{fill:#b6a38b20;stroke:#827762}.physics-diagram .apparatus-back{stroke:#827762;stroke-dasharray:4 5;opacity:.5}.physics-diagram .electron-path{stroke:var(--diagram-copper);stroke-width:2;marker-end:url(#apparatus-arrow)}.physics-diagram .electric-arrow{stroke:#557d66;stroke-width:2;marker-end:url(#apparatus-arrow)}.physics-diagram .magnetic-arrow{stroke:#537b99;stroke-width:2;marker-end:url(#apparatus-arrow)}
+@keyframes diagram-current{from{stroke-dashoffset:55}to{stroke-dashoffset:0}}@media(prefers-reduced-motion:reduce){.physics-diagram *{animation:none!important}}
+
+/* The lab drawer belongs to the dark instrument environment; the book keeps paper. */
+#drawer .physics-diagram{color:#e8f0f8;font-size:20px;--diagram-paper:#15263a;--diagram-copper:#edb45e;--diagram-teal:#66c6dc}
+#drawer .physics-diagram .small,#drawer .physics-diagram .dimension-label{font-size:18px}
+#drawer .physics-diagram .meter-label{font-size:19px}
+#drawer .circuit-diagram [data-part="heater"] text{font-size:18px}
+#drawer .physics-diagram .glass{fill:#7fb8e80b;stroke:#7a9fb9;stroke-width:1.8}
+#drawer .physics-diagram .electrode{fill:#d5ab6638;stroke:#c8ac7e}
+#drawer .physics-diagram .guard{fill:#57a8c82b;stroke:#76bad2}
+#drawer .physics-diagram .terminal{stroke:#b6cde0}
+#drawer .physics-diagram .axis{stroke:#688298}
+#drawer .physics-diagram .dimension,#drawer .physics-diagram .annotation{stroke:#91acc3;stroke-width:1.3}
+#drawer .physics-diagram .divider{stroke:#385169}
+#drawer .circuit-diagram .part{color:#a7b5c3}
+#drawer .circuit-diagram .lead{color:#718497}
+#drawer .circuit-diagram .junction{fill:#a8bbcc}
+#drawer .circuit-diagram .part:hover,#drawer .circuit-diagram .part:focus,#drawer .circuit-diagram .part.is-selected{color:#fff4df}
+#drawer .circuit-diagram .part:hover .symbol,#drawer .circuit-diagram .part.is-selected .symbol{stroke:#72dbed;stroke-width:2.7}
+#drawer .circuit-diagram .lead.is-lit .wire{stroke:#f1e9d9;stroke-width:2.1}
+#drawer .circuit-diagram .lead:hover .wire,#drawer .circuit-diagram .lead:focus .wire{stroke:#72dbed;stroke-width:3}
+#drawer .circuit-diagram .lead.is-selected .wire{stroke:#ffc575;stroke-width:3.1}
+#drawer .physics-diagram .electrode-line{stroke:#e2bd7e}
+#drawer .physics-diagram .field-line{stroke:#6dcce5;stroke-width:1.6}
+#drawer .physics-diagram .secondary{opacity:.6}
+/* Filled pointer targets include symbols and their labels. Only lead groups carry completion state. */
+.physics-diagram .part-hit{fill:transparent;stroke:none;pointer-events:all}
+.circuit-diagram .wire-hit{stroke-width:24;pointer-events:stroke}
+#drawer .circuit-diagram .lead{color:#617384;opacity:.55}
+#drawer .circuit-diagram .lead.is-lit,#drawer .circuit-diagram .lead:focus,#drawer .circuit-diagram .lead:hover{opacity:1}
+#drawer .circuit-diagram .part{color:#d5dce2}
+#drawer .circuit-diagram .part.is-selected{color:#f4dab1}
+#drawer .physics-diagram .part.is-hovered{color:#edc587}
+#drawer .circuit-diagram .part:hover .part-hit,#drawer .circuit-diagram .part:focus .part-hit,#drawer .circuit-diagram .part.is-hovered .part-hit{fill:#b5c9dd0b;stroke:#b5c9dd50;stroke-width:1}
+#drawer .physics-diagram{font-size:23px}
+#drawer .physics-diagram .small,#drawer .physics-diagram .dimension-label{font-size:19px}
+#drawer .physics-diagram .dimension-label{font-size:17px}
+#drawer .circuit-diagram [data-part="heater"] text{font-size:22px}
+#drawer .physics-diagram [data-part]{cursor:pointer;outline:none}
+#drawer .structure-diagram [data-part]:hover rect,#drawer .structure-diagram [data-part]:focus rect{stroke:#e9c186;stroke-width:3}
+body[data-overlay=true] .assembly-labels{visibility:hidden}
+#drawer .circuit-diagram{font-size:14px}
+#drawer .circuit-diagram .meter-label{font-size:12px}
+#drawer .circuit-diagram [data-part="heater"] text{font-size:14px}
+#drawer .circuit-diagram .coil-note{font-size:12px}
+.circuit-diagram .wire-hit{stroke-width:17}
+#drawer .circuit-diagram .wire{stroke-width:1.3}
+#drawer .circuit-diagram .lead.is-lit .wire{stroke-width:1.7}
+#drawer .circuit-diagram .lead.is-selected .wire{stroke-width:2}
+
+/* Axial section: restrained dimension lines, legible labels, continuous filament. */
+#drawer .structure-diagram{font-size:21px}
+#drawer .structure-diagram .small{font-size:18px}
+#drawer .structure-diagram .dimension-label{font-size:16px}
+#drawer .structure-diagram .electrode{fill:#ddc79c;stroke:#dfccaa;stroke-width:1}
+#drawer .structure-diagram .guard{fill:#a4bbc5;stroke:#b1c4ca}
+#drawer .structure-diagram .glass{fill:#a1c2d205;stroke:#8cb3c1;stroke-width:1.25}
+#drawer .structure-diagram .dimension,#drawer .structure-diagram .annotation{stroke:#92a6b2;stroke-width:1}
+#drawer .structure-diagram [data-part]:hover .part-hit,#drawer .structure-diagram [data-part]:focus .part-hit,#drawer .structure-diagram [data-part].is-hovered .part-hit{fill:#d7bc7a09;stroke:#d7bc7a66;stroke-width:1}
+#drawer .guard-diagram{font-size:20px}
+#drawer .guard-diagram .field-line{stroke:#80bdc3;stroke-width:1.3}
+#drawer .guard-diagram .glass{fill:none;stroke:#8ba6af;stroke-width:1}
+#drawer .guard-diagram .electrode-line{stroke:#c2cdd1;stroke-width:3.5}
+#drawer .structure-diagram .filament-halo{stroke:#ffc56a;stroke-width:7;opacity:.75;filter:url(#structure-filament-glow)}
+#drawer .structure-diagram .filament{stroke:url(#structure-filament-light);stroke-width:2.6}
+
+#drawer .circuit-diagram .lead:not(.is-lit) .wire {stroke:#9bacb7;stroke-dasharray:5 4}
+#drawer .circuit-diagram .lead.is-lit .wire {stroke-dasharray:none}
+#drawer .circuit-diagram .lead.is-selected .wire {stroke:#ffc575;stroke-dasharray:none}
